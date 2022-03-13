@@ -8,9 +8,12 @@ uniform vec2 sphere_xy;
 
 out vec4 color;
 
+mat3 rot = mat3(vec3(cos(xx), 0, sin(xx)), vec3(0, 1, 0),  vec3(-sin(xx), 0, cos(xx)));
+
 vec3 pos = vec3(sphere_xy, 2);//vec3(2+xx, 0.0, 2);//sphere position
 
 vec3 c = vec3(0, 0.0, 2.2);//rect position
+
 
 vec3 s = vec3(1,1,1);//rect size
 
@@ -25,7 +28,7 @@ vec3 comp = vec3(xu, yu, -1);
 
 vec3 dir = normalize(comp-cam);
 
-vec3 light_position = vec3(1.0, 1.0, 3.0);
+vec3 light_position = vec3(1.0, 1.0, 6.0);
 
 float rad = 0.5;
 
@@ -40,22 +43,27 @@ float sphere_dist(vec3 p){
 
 float rect_dist (vec3 p)
 {
+    
+    vec3 t = c*rot;
+    vec3 t2 = p*rot;
+
     float x = max
-    (   p.x - c.x - s.x/2,
-        c.x - p.x - s.x/2
+    (   t2.x - t.x - s.x/2,
+        t.x - t2.x - s.x/2
     );
     float y = max
-    (   p.y - c.y - s.y/2,
-        c.y - p.y - s.y/2
+    (   t2.y - t.y - s.y/2,
+        t.y - t2.y - s.y/2
     );
     
     float z = max
-    (   p.z - c.z - s.z/2,
-        c.z - p.z - s.z/2
+    (   t2.z - t.z - s.z/2,
+        t.z - t2.z - s.z/2
     );
+
     float d = x;
-    d = max(d,y);
-    d = max(d,z);
+    d = max(d, y);
+    d = max(d, z);
     return d;
 }
 
@@ -83,8 +91,8 @@ vec3 calculate_normal(vec3 p){
 vec4 ray_march(vec3 ro, vec3 rd)
 {
     float total_distance_traveled = 0;
-    const float MINIMUM_HIT_DISTANCE = 0.01;
-    const float MAXIMUM_TRACE_DISTANCE = 1000.0;
+    const float MINIMUM_HIT_DISTANCE = 0.000001;
+    const float MAXIMUM_TRACE_DISTANCE = 40;
 
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {

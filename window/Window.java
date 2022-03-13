@@ -22,7 +22,7 @@ public class Window {
 	private int width = 800;
 	private int height = 600;
 	
-	private int vaoID, vboID, uniformID;
+	private int vaoID, vboID, uniformID, uniform2ID;
 
 	public static float xx = 0;
 
@@ -71,7 +71,7 @@ public class Window {
 		shader = new Shader();
 		shader.create();
 
-		// uniformID = glGetUniformLocation(shader.programID, "xx");
+		uniform2ID = glGetUniformLocation(shader.programID, "xx");
 		uniformID = glGetUniformLocation(shader.programID, "sphere_xy");
 
 		vaoID = glGenVertexArrays();
@@ -93,8 +93,9 @@ public class Window {
 				speed = -speed;
 
 			shader.use();
+			glUniform1f(uniform2ID, xx);
 			glUniform2f(uniformID, 2*(dx/400-1), 2*(dy/300-1));
-			System.out.println(dx);
+			// System.out.println(dx);
 			glClearColor(1, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 			Render.render(vaoID, model);
