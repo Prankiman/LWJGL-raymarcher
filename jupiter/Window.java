@@ -20,6 +20,8 @@ public class Window {
 	private int vaoID, vboID, uniformID;
 
 	public static float xx = 0;
+
+	float speed = 0.02f;
 	
 	private Model model;
 	private Shader shader;
@@ -73,8 +75,9 @@ public class Window {
 	
 	public void loop() {
 		while (!glfwWindowShouldClose(window)) {
-			xx += 0.002;
-			xx %= 2;
+			xx += speed;
+			if (xx > 0 || xx < -4)
+				speed = -speed;
 			shader.use();
 			glUniform1f(uniformID, xx);
 			glClearColor(1, 1, 1, 1);
