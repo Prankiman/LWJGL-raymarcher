@@ -1,14 +1,19 @@
-package jupiter;
+package window;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL40.*;
 
+import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.windows.MOUSEINPUT;
+
+import inputs.MouseInput;
 
 public class Window {
 	
@@ -21,14 +26,18 @@ public class Window {
 
 	public static float xx = 0;
 
-	float speed = 0.02f;
+	float speed = 0.002f;
 	
 	private Model model;
 	private Shader shader;
 	
 	private float[] vertexArray;
 	
+	private GLFWCursorPosCallback cursor;
+
 	private long window;
+
+	public static float dx, dy;
 	
 	private Window() {}
 	
@@ -57,10 +66,13 @@ public class Window {
 		glfwMakeContextCurrent(window);
 		GL.createCapabilities();
 		
+		glfwSetCursorPosCallback(window, cursor = new MouseInput());
+
 		shader = new Shader();
 		shader.create();
 
-		uniformID = glGetUniformLocation(shader.programID, "xx");
+		// uniformID = glGetUniformLocation(shader.programID, "xx");
+		uniformID = glGetUniformLocation(shader.programID, "sphere_xy");
 
 		vaoID = glGenVertexArrays();
 
@@ -68,6 +80,7 @@ public class Window {
 		
 		model = new Model(new Vector3f(0, 0, 0), new Vector2f(1, 1), new Vector3f(0, 0, 0));
 		model.create();
+
 		// tex = new Texture(0);
 		
 		glfwShowWindow(window);
@@ -78,8 +91,10 @@ public class Window {
 			xx += speed;
 			if (xx > 0 || xx < -4)
 				speed = -speed;
+
 			shader.use();
-			glUniform1f(uniformID, xx);
+			glUniform2f(uniformID, 2*(dx/400-1), 2*(dy/300-1));
+			System.out.println(dx);
 			glClearColor(1, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 			Render.render(vaoID, model);

@@ -1,4 +1,4 @@
-package jupiter;
+package window;
 
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;

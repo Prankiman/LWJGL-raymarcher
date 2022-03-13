@@ -1,4 +1,4 @@
-package jupiter;
+package window;
 
 import static org.lwjgl.opengl.GL40.*;
 

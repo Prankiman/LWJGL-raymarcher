@@ -4,9 +4,11 @@ in vec4 passColor;
 
 uniform float xx;
 
+uniform vec2 sphere_xy;
+
 out vec4 color;
 
-vec3 pos = vec3(2+xx, 0.0, 2);//sphere position
+vec3 pos = vec3(sphere_xy, 2);//vec3(2+xx, 0.0, 2);//sphere position
 
 vec3 c = vec3(0, 0.0, 2.2);//rect position
 
@@ -63,7 +65,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return smin(rect_dist(pos), sphere_dist(pos), 0.4);
+    return smin(rect_dist(pos), sphere_dist(pos), 1);
 }
 
 vec3 calculate_normal(vec3 p){

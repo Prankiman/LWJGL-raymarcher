@@ -1,4 +1,4 @@
-package jupiter;
+package window;
 
 import static org.lwjgl.opengl.GL40.*;
 
@@ -56,7 +56,6 @@ public class Shader {
 		// fragmentID = loadShader(GL_FRAGMENT_SHADER, fs);
 		vertexID = loadShader(GL_VERTEX_SHADER, vertexFile);
 		fragmentID = loadShader(GL_FRAGMENT_SHADER, fragmentFile);
-		uniformID = glGetUniformLocation(fragmentID, "xx");
 		
 		glAttachShader(programID, vertexID);
 		glAttachShader(programID, fragmentID);

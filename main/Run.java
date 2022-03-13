@@ -1,6 +1,6 @@
 package main;
 
-import jupiter.Window;
+import window.Window;
 
 public class Run {
 	
