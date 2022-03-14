@@ -13,6 +13,7 @@ import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.windows.MOUSEINPUT;
 
+import inputs.KeyInput;
 import inputs.MouseInput;
 
 public class Window {
@@ -22,9 +23,11 @@ public class Window {
 	private int width = 800;
 	private int height = 600;
 	
-	private int vaoID, vboID, uniformID, uniform2ID;
+	private int vaoID, vboID, uniformID, uniform2ID, uniform3ID;
 
 	public static float xx = 0;
+
+	public static float camx = 0, camy = 0, camz = -7;
 
 	float speed = 0.002f;
 	
@@ -34,6 +37,8 @@ public class Window {
 	private float[] vertexArray;
 	
 	private GLFWCursorPosCallback cursor;
+
+	KeyInput keyboard;
 
 	private long window;
 
@@ -67,12 +72,14 @@ public class Window {
 		GL.createCapabilities();
 		
 		glfwSetCursorPosCallback(window, cursor = new MouseInput());
+		glfwSetKeyCallback(window, keyboard = new KeyInput());
 
 		shader = new Shader();
 		shader.create();
 
 		uniform2ID = glGetUniformLocation(shader.programID, "xx");
 		uniformID = glGetUniformLocation(shader.programID, "sphere_xy");
+		uniform3ID = glGetUniformLocation(shader.programID, "orig");
 
 		vaoID = glGenVertexArrays();
 
@@ -95,6 +102,7 @@ public class Window {
 			shader.use();
 			glUniform1f(uniform2ID, xx);
 			glUniform2f(uniformID, 2*(dx/400-1), 2*(dy/300-1));
+			glUniform3f(uniform3ID, camx, camy, camz);
 			// System.out.println(dx);
 			glClearColor(1, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
