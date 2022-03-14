@@ -102,7 +102,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return smin(rect_dist(pos), sphere_dist(pos), 0.9);//fractalSDF(pos);//
+    return smin(rect_dist(pos), sphere_dist(pos), 0.9);//fractalSDF(pos);
 }
 
 vec3 calculate_normal(vec3 p){
@@ -156,7 +156,7 @@ vec4 ray_march(vec3 ro, vec3 rd)
             // vec4 color = (vec4(2,2,0, 1)*diffuse_intensity*rect_dist(current_position)/max(sphere_dist(current_position)+rect_dist(current_position),0.001)+//blending according to the relative distance between objects
             //     vec4(0.9, 1, 1.2, 1)*diffuse_intensity*sphere_dist(current_position)/max(rect_dist(current_position)+sphere_dist(current_position),0.001));
 
-            vec4 color = vec4(normal.z*normal.z/2, normal.y/min(normal.z, 1), normal.x/min(normal.z, 1),1)*diffuse_intensity;
+            vec4 color = diffuse_intensity/2+vec4(normal.x/min(normal.z, 0.1), normal.y/min(normal.z, 0.1),  normal.z*normal.z/2,1)*diffuse_intensity;
             return color;
         }
 
