@@ -102,7 +102,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return smin(rect_dist(pos), sphere_dist(pos), 0.9);
+    return smin(rect_dist(pos), sphere_dist(pos), 0.9);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
