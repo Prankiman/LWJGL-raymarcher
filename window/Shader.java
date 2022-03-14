@@ -8,8 +8,8 @@ import java.io.IOException;
 
 public class Shader {
 	
-	private String vertexFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/vertex.glsl";
-	private String fragmentFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/fragment.glsl";
+	private String vertexFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/vertex.vs.glsl";
+	private String fragmentFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/raymarch.fs.glsl";
 	
 	public int programID, vertexID, fragmentID, uniformID;
 	
@@ -52,8 +52,6 @@ public class Shader {
 	public void create() {
 		programID = glCreateProgram();
 		
-		// vertexID = loadShader(GL_VERTEX_SHADER, vs);
-		// fragmentID = loadShader(GL_FRAGMENT_SHADER, fs);
 		vertexID = loadShader(GL_VERTEX_SHADER, vertexFile);
 		fragmentID = loadShader(GL_FRAGMENT_SHADER, fragmentFile);
 		

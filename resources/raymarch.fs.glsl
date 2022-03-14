@@ -8,19 +8,23 @@ uniform vec2 sphere_xy;
 
 out vec4 color;
 
+out vec2 position;
+
 mat3 rot = mat3(vec3(cos(xx), 0, sin(xx)), vec3(0, 1, 0),  vec3(-sin(xx), 0, cos(xx)));
 
-vec3 pos = vec3(sphere_xy, 2);//vec3(2+xx, 0.0, 2);//sphere position
+vec3 pos = vec3(sphere_xy, 2);//sphere position
+
+float rad = 0.5;//sphere radius
 
 vec3 c = vec3(0, 0.0, 2.2);//rect position
 
 
 vec3 s = vec3(1,1,1);//rect size
 
-// vec3 sc = ivec2(tex);
 
 vec3 cam = vec3(0, 0, -5);
 
+//normalized pixel coordiantes
 float xu = (gl_FragCoord.x/400-1)/0.75;
 float yu = 1-(gl_FragCoord.y/300);
 
@@ -28,20 +32,18 @@ vec3 comp = vec3(xu, yu, -1);
 
 vec3 dir = normalize(comp-cam);
 
-vec3 light_position = vec3(1.0, 1.0, 6.0);
-
-float rad = 0.5;
+vec3 light_position = vec3(0, 6, 6.0);
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-float sphere_dist(vec3 p){
+float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((5+xx) * p.x) * sin((5+xx) * p.y) * sin((5.0+xx) * p.z) * 0.25;
 	return length(pos-p)-rad+displacement;
 }
 
-float rect_dist (vec3 p)
+float rect_dist (vec3 p)//distance function for cubeoids
 {
     
     vec3 t = c*rot;
@@ -102,6 +104,7 @@ vec4 ray_march(vec3 ro, vec3 rd)
 
         if (distance_to_closest <= MINIMUM_HIT_DISTANCE) 
         {
+            
             vec3 normal = calculate_normal(current_position);
             vec3 direction_to_light = normalize(current_position - light_position);
 
@@ -123,8 +126,9 @@ vec4 ray_march(vec3 ro, vec3 rd)
             //     diffuse_intensity = 0;
             //------------------------------------
 
-
-            return vec4(1.3, 0.5, 0.3, 1)*diffuse_intensity;
+            vec4 color = (vec4(2.3, 0.5, 0.3, 1)*diffuse_intensity*rect_dist(current_position)/max(sphere_dist(current_position)+rect_dist(current_position),0.001)+//blending according to the relative distance between objects
+                vec4(1.3, 1.5, 0.3, 1)*diffuse_intensity*sphere_dist(current_position)/max(rect_dist(current_position)+sphere_dist(current_position),0.001));
+            return color;
         }
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
@@ -139,5 +143,6 @@ vec4 ray_march(vec3 ro, vec3 rd)
 
 void main() {
 	color = ray_march(cam, dir);
+    position = vec2(xu, yu);
 }
 
