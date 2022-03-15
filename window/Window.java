@@ -101,7 +101,7 @@ public class Window {
 
 			shader.use();
 			glUniform1f(uniform2ID, xx);
-			glUniform2f(uniformID, 2*(dx/400-1), 2*(dy/300-1));
+			glUniform2f(uniformID, 2*((dx+camx*200)/400-1), 2*((dy+camy*150)/300-1));
 			glUniform3f(uniform3ID, camx, camy, camz);
 			// System.out.println(dx);
 			glClearColor(1, 1, 1, 1);

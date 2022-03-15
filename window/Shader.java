@@ -5,11 +5,12 @@ import static org.lwjgl.opengl.GL40.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.File;
 
 public class Shader {
 	
-	private String vertexFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/vertex.vs.glsl";
-	private String fragmentFile = "F:/diverse/eclipse-workspace/lwjglShaderTesting/resources/raymarch.fs.glsl";
+	private String vertexFile = new File("./resources/vertex.vs.glsl").getAbsolutePath();
+	private String fragmentFile = new File("./resources/raymarch.fs.glsl").getAbsolutePath();;
 	
 	public int programID, vertexID, fragmentID, uniformID;
 	
