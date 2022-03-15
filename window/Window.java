@@ -78,7 +78,7 @@ public class Window {
 		shader.create();
 
 		uniform2ID = glGetUniformLocation(shader.programID, "xx");
-		uniformID = glGetUniformLocation(shader.programID, "sphere_xy");
+		uniformID = glGetUniformLocation(shader.programID, "mouse_xy");
 		uniform3ID = glGetUniformLocation(shader.programID, "orig");
 
 		vaoID = glGenVertexArrays();
@@ -101,7 +101,7 @@ public class Window {
 
 			shader.use();
 			glUniform1f(uniform2ID, xx);
-			glUniform2f(uniformID, 2*((dx+camx*200)/400-1), 2*((dy+camy*150)/300-1));
+			glUniform2f(uniformID, dx, dy);
 			glUniform3f(uniform3ID, camx, camy, camz);
 			// System.out.println(dx);
 			glClearColor(1, 1, 1, 1);

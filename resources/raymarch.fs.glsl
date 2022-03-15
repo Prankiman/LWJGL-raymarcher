@@ -4,15 +4,20 @@ in vec4 passColor;
 
 uniform float xx;
 
-uniform vec2 sphere_xy;
+uniform vec2 mouse_xy;
 
 uniform vec3 orig;
 
+vec2 sphere_xy = 2*vec2(((mouse_xy.x+orig.x*200)/400-1), 2*((mouse_xy.y+orig.y*150)/300-1));
+
+vec2 cam_rot_xy= sphere_xy*0.2;
+
 out vec4 color;
 
-mat3 rot = mat3(vec3(cos(xx), 0, sin(xx)), vec3(0, 1, 0),  vec3(-sin(xx), 0, cos(xx)));
+mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  vec3(-sin(cam_rot_xy.x), 0, cos(cam_rot_xy.x)));
+mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(cam_rot_xy.y*-1), -sin(cam_rot_xy.y*-1)),  vec3( 0, sin(cam_rot_xy.y*-1), cos(cam_rot_xy.y*-1)));
 
-vec3 pos = vec3(sphere_xy, 2);//sphere position
+vec3 pos = vec3(2+xx,0,2);//vec3(sphere_xy, 2);//sphere position
 
 float rad = 0.35;//sphere radius
 
@@ -30,7 +35,7 @@ float yu = 1-(gl_FragCoord.y/300);
 
 vec3 comp = vec3(xu, yu, -1);
 
-vec3 dir = normalize(comp-cam);
+vec3 dir = normalize(comp-cam)*rotx*roty;
 
 vec3 light_position = vec3(0, 6, 6.0);
 
@@ -44,10 +49,10 @@ float sphere_dist(vec3 p){//distance function for spheres
 }
 
 float fractalSDF(vec3 pos) {
-	vec3 z = pos;
+	vec3 z = pos*rotx*roty;
 	float dr = 20;
 	float r;
-    float Power = 4, Iterations = 500, Bailout = 1000;
+    float Power = 4, Iterations = 2000, Bailout = 200;
 	for (int i = 0; i < Iterations ; i++) {
 		r = length(z);
 		if (r>Bailout) break;
@@ -72,8 +77,8 @@ float fractalSDF(vec3 pos) {
 float rect_dist(vec3 p)//distance function for cubeoids
 {
     
-    vec3 t = c*rot;
-    vec3 t2 = p*rot;
+    vec3 t = c*roty;
+    vec3 t2 = p*roty;
 
     float x = max
     (   t2.x - t.x - s.x/2,
