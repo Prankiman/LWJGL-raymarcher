@@ -4,9 +4,10 @@ layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 
 layout (rgba32f, binding = 0)  writeonly uniform image2D ftex;
-layout ( binding = 1)  uniform sampler2D skybox;
+layout (binding = 1)  uniform sampler2D skybox;
 layout (binding = 2) uniform sampler2D blurred_sky;
 layout (binding = 3) uniform sampler2D normal_map;
+layout (binding = 4) uniform sampler2D sphere_tex;
 
 float reflectivity = 0.01;
 int num_reflections = 2;
@@ -216,6 +217,9 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
                 
             vec3 normal = calculate_normal(current_position);
+
+            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32));
+
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
             vec3 direction_to_light = normalize(current_position- light_position);
@@ -229,13 +233,13 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
             
             //direct specular ligthing
             if(refl)
-                spec =  vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
+                spec = vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
             
             vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 11);
 
             vec4 c = vec4(spec,1)+
             //blending color according to the relative distance between objects
-            (vec4(1,0.5,0, 1)*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
+            (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
             vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10))*globe_lum;
             
             // color = vec4(current_position+vec3(0.5,0.5,0.5),1)*(vec4(20)/num_steps);
@@ -267,7 +271,7 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     //return skycolor
     vec4 temp;
     if(reflectivity > 0.9 || !refl)
-        temp = texture(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32));
+        temp = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else 
         temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
     float temp_bright = (temp.x+temp.y+temp.z);

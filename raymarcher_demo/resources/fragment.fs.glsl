@@ -33,8 +33,8 @@ float kernel2[9] = float[]
 
 void main(){
 
-    float exposure = 0.6;
-    float gamma = 0.7;
+    float exposure = 4;
+    float gamma = 1;
 
     for(int i = 0; i < 9; i++)
         t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;

@@ -50,7 +50,7 @@ public class Window {
 
 	int screenTex;
 
-	public static Texture skybox, blurred_skybox, normal;
+	public static Texture skybox, blurred_skybox, normal, sphere_tex;
 
 	public static float dx, dy;
 
@@ -104,9 +104,10 @@ public class Window {
 
 		createTexture();
 		vaoID = glGenVertexArrays();
-		skybox = new Texture( new File("./raymarcher_demo/resources/shanghai.hdr").getAbsolutePath());
-		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/shanghai_blur.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/normal.jpg").getAbsolutePath());
+		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
+		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR_blurred.hdr").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/metal_plates006_8k_normal.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/MetalPlates006_8K_Color.jpg").getAbsolutePath());
  
 		glBindVertexArray(vaoID);
 
@@ -163,6 +164,11 @@ public class Window {
 			glBindTexture(GL_TEXTURE_2D, normal.texID);
 			glBindImageTexture(3, normal.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
 			glBindTextureUnit(3, normal.texID);
+
+			glActiveTexture(GL_TEXTURE0+4);
+			glBindTexture(GL_TEXTURE_2D, sphere_tex.texID);
+			glBindImageTexture(4, sphere_tex.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
+			glBindTextureUnit(4, sphere_tex.texID);
 
 			cs.disp();
 			// glBindImageTexture(0, 0, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
