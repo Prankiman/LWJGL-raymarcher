@@ -70,7 +70,7 @@ public class ComputeShader {
 		glUseProgram(programID);
 		
 		IntBuffer params = BufferUtils.createIntBuffer(1);
-        int loc = glGetUniformLocation(programID, "ftex");
+        // int loc = glGetUniformLocation(programID, "ftex");
         //glGetUniformiv(programID, loc, params);//used for debugging
         Window.framebufferImageBinding = params.get(0);
 		glUseProgram(0);

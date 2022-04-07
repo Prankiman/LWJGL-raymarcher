@@ -6,9 +6,10 @@ layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 layout (rgba32f, binding = 0)  writeonly uniform image2D ftex;
 layout ( binding = 1)  uniform sampler2D skybox;
 layout (binding = 2) uniform sampler2D blurred_sky;
+layout (binding = 3) uniform sampler2D normal_map;
 
-float reflectivity = 0.2;
-int num_reflections = 4;
+float reflectivity = 0.01;
+int num_reflections = 2;
 
 
 // uniform float xx;
@@ -21,9 +22,9 @@ uniform vec2 mouse_xy;
 
 uniform vec3 orig;
 
-int width = 800;
+int width = 1600;
 
-int height = 600;
+int height = 1200;
 
 vec2 sphere_xy = 2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
 
@@ -92,8 +93,7 @@ float rand(vec2 co){
 
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
-	p.xz = (mod((pos.xz-p.xz),4)-2);
-    // p.y = (mod((p.y),6)-3);
+	p.x = (mod((pos.x-p.x),4)-2);
     return length(p)-rad+displacement;//length(pos-p)-rad+displacement;//
 }
 
@@ -200,7 +200,9 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     float distance_to_closest;
     vec3 normall = calculate_normal(ro);
 
-     if(refl)
+    normall *= 0.5*texture(normal_map, vec2(0.5+atan(normall.x, normall.z)*0.16, 0.5+asin(-normall.y)*0.32)).xyz;
+
+     if(refl)        
         rd = rd-normall*2*dot(rd, normall);//reflecting the direction vector
     
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
@@ -214,6 +216,7 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
                 
             vec3 normal = calculate_normal(current_position);
+            normal *= 0.5*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
@@ -263,7 +266,7 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
     //return skycolor
     vec4 temp;
-    if(reflectivity > 0.8 || !refl)
+    if(reflectivity > 0.9 || !refl)
         temp = texture(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32));
     else 
         temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
