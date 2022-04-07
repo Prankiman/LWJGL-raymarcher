@@ -200,7 +200,7 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     float distance_to_closest;
     vec3 normall = calculate_normal(ro);
 
-    normall *= 0.5*texture(normal_map, vec2(0.5+atan(normall.x, normall.z)*0.16, 0.5+asin(-normall.y)*0.32)).xyz;
+    normall *= texture(normal_map, vec2(0.5+atan(normall.x, normall.z)*0.16, 0.5+asin(-normall.y)*0.32)).xyz;
 
      if(refl)        
         rd = rd-normall*2*dot(rd, normall);//reflecting the direction vector
@@ -216,7 +216,7 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
                 
             vec3 normal = calculate_normal(current_position);
-            normal *= 0.5*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
+            normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
