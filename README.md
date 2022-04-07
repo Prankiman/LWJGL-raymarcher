@@ -2,6 +2,12 @@
 ray marching in opengl lwjgl using compute shader
 
 ![Screenshot 2022-03-14 220852](https://user-images.githubusercontent.com/69918769/158261866-09fe3269-94aa-4188-b0c8-d26f5017e839.png)
-![Screenshot 2022-03-14 132903](https://user-images.githubusercontent.com/69918769/158181435-b7a8045d-0db6-48c1-99c8-9d6820658db4.png)
-![Screenshot 2022-04-04 232325](https://user-images.githubusercontent.com/69918769/161634667-1ae2f467-fadb-4aec-b15d-69fbb6613d5a.png)
-![Screenshot 2022-04-05 223225](https://user-images.githubusercontent.com/69918769/161864053-d702b0c1-392e-4a48-b010-7be5192c17c3.png)
+reflectivity of 0.7:
+![Screenshot 2022-04-07 022129](https://user-images.githubusercontent.com/69918769/162096425-ae35d93b-01dc-4e01-bb1a-ec5ca780b110.png)
+reflectivity of 0.2:
+![Screenshot 2022-04-07 022200](https://user-images.githubusercontent.com/69918769/162096432-1f055e3f-26c8-4048-b4c1-0c375654ed17.png)
+
+
+![Screenshot 2022-03-14 132903](https://user-images.githubusercontent.com/69918769/162096523-bec66cb5-650b-4f9a-a013-ac1c66837922.png)
+using hdr images: 
+![Screenshot 2022-04-07 184433](https://user-images.githubusercontent.com/69918769/162256259-6ef320d5-07cc-42da-8f2d-8b55943acbd4.png)
