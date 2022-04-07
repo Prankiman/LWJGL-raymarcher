@@ -5,6 +5,11 @@ layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout (rgba32f, binding = 0)  writeonly uniform image2D ftex;
 layout ( binding = 1)  uniform sampler2D skybox;
+layout (binding = 2) uniform sampler2D blurred_sky;
+
+float reflectivity = 0.2;
+int num_reflections = 4;
+
 
 // uniform float xx;
 
@@ -16,6 +21,9 @@ uniform vec2 mouse_xy;
 
 uniform vec3 orig;
 
+int width = 800;
+
+int height = 600;
 
 vec2 sphere_xy = 2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
 
@@ -27,6 +35,9 @@ mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  
 mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
 
 vec3 rotateYP(vec3 v, float yaw, float pitch) {
+
+    
+
     //needs to be in radians
     float yawRads = yaw;
     float pitchRads = pitch;
@@ -56,13 +67,14 @@ vec3 c = vec3(0.0, -1.0, 2.2);//rect position
 vec3 s = vec3(2,2,2);//rect size
 
 vec3 cam = vec3(0, 0, -5);
+
 // vec3 orig = vec3(0, 0, -7);
 
 
 ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 //normalized pixel coordiantes
-float xu = (float(pixel_coords.x*2 - 1600)/1600/0.75);
-float yu = 1-(float(pixel_coords.y*2 - 1200)/1200);
+float xu = (float(pixel_coords.x*2 - width)/width/0.75);
+float yu = 1-(float(pixel_coords.y*2 - height)/height);
 // float xu = float(pixel_coords.x/800-1)/0.75;
 // float yu = 1-float(pixel_coords.y/600);
 
@@ -72,7 +84,7 @@ vec3 dir = normalize(comp-cam)*rotx*roty;
 
 vec3 light_position = vec3(-10,20, 0.5);
 
-float globe_lum = 5;
+float globe_lum = 2;
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -159,17 +171,35 @@ vec3 calculate_normal(vec3 p){
 	return normalize(vec3(gx,gy,gz));
 }
 
+vec2 offsets[9] = vec2[]
+(
+    vec2(-1,  1), vec2( 0.0f,    1), vec2( 1,  1),
+    vec2(-1,  0.0f),     vec2( 0.0f,    0.0f),     vec2( 1,  0.0f),
+    vec2(-1, -1), vec2( 0.0f,   -1), vec2( 1, -1) 
+);
+
+float blur[9] = float[]
+(
+   1, 2, 1,
+   2, 4, 2,
+   1, 2, 1
+);
+
 vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 {
+    //off is used so that the reflection direction doesn't intersect the object it bounced off from;
     float total_distance_traveled = 0;
     float MINIMUM_HIT_DISTANCE = 0.001;
     float MAXIMUM_TRACE_DISTANCE = 40;
     int num_steps = 0;
 
+    vec3 ind_diff;
+
     vec3 current_position;
     
     float distance_to_closest;
     vec3 normall = calculate_normal(ro);
+
      if(refl)
         rd = rd-normall*2*dot(rd, normall);//reflecting the direction vector
     
@@ -187,22 +217,22 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
-
-            float diffuse = 0.3+max(0,dot(normal, direction_to_light));//diffuse lighting
-
-
-            vec3 refl_dir =  rd-normall*2*dot(rd, normall);
-
+            //direct diffuse ligthing
+            float diffuse = 0.5+max(0,dot(normal, direction_to_light));//diffuse lighting
+           
             vec3 spec = vec3(0);//specular lighting
 
-            float shine_dampening = 8;
+            float shine_dampening = 4;
             
+            //direct specular ligthing
             if(refl)
-                spec =  vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening))*4;
+                spec =  vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
+            
+            vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 11);
 
             vec4 c = vec4(spec,1)+
             //blending color according to the relative distance between objects
-            (vec4(1,0.5,0, 1)*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
+            (vec4(1,0.5,0, 1)*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
             vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10))*globe_lum;
             
             // color = vec4(current_position+vec3(0.5,0.5,0.5),1)*(vec4(20)/num_steps);
@@ -210,24 +240,6 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
             
             return vec4[2](vec4(c.x, c.y, c.z, 1 ), vec4(current_position, 1));
            
-        
-             //TOON SHADING
-            //----------------------------------
-            // if (diffuse > 0.75)
-            //     diffuse = 0.75;
-            // else if (diffuse > 0.5)
-            //     diffuse = 0.5;
-            // else if (diffuse > 0.35)
-            //     diffuse = 0.35;
-            // else if (diffuse > 0.15)
-            //     diffuse = 0.15;
-            // else
-            //     diffuse = 0;
-            //------------------------------------
-
-            //SHADING BASED ON NORMALS
-            //---------------------------
-            // vec4 color = diffuse/2+vec4(normal.x/min(normal.z, 0.1), normal.y/min(normal.z, 0.1),  normal.z*normal.z/2,1)*diffuse;
 
         }
 
@@ -250,21 +262,25 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     //----------------------------------------
 
     //return skycolor
-
-	return vec4[2](texture(skybox, vec2(0.5+atan(rd.x, rd.z)*0.159154943092, 0.5+asin(-rd.y)*0.318309886184)), vec4(0));
+    vec4 temp;
+    if(reflectivity > 0.8 || !refl)
+        temp = texture(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32));
+    else 
+        temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
+    float temp_bright = (temp.x+temp.y+temp.z);
+    if(!refl)
+         return vec4[2](temp, vec4(0));
+    return vec4[2](temp*temp_bright, vec4(0));
 }
 
 
 void main() {    
-    
-    //blend reflected color and color based on reflecticity
-    float reflectivity = 0.4;
-    int num_reflections = 8;
-   
+
     vec4[2] temp = ray_march(orig+cam, dir, false, 0);
     vec4 temp_color = temp[0];
     for (int i = 0; i < num_reflections; i++){ 
         if(temp[1].w == 1){
+            //blend reflected color and color based on reflecticity
             temp = ray_march(temp[1].xyz, dir, true, i);
             temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
         }

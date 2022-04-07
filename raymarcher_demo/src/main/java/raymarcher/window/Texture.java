@@ -1,8 +1,6 @@
 package raymarcher.window;
 
 import org.lwjgl.BufferUtils;
-
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -35,7 +33,7 @@ public class Texture {
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
         FloatBuffer image = stbi_loadf(filepath, width, height, channels, 0);
-        glTextureStorage2D(texID, 1, GL_RGBA, 1600, 1200);
+        glTextureStorage2D(texID, 1, GL_RGBA, 800, 600);
         // glBindImageTexture(1, texID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA);
         if (image != null) {
             if (channels.get(0) == 4) {
@@ -51,6 +49,8 @@ public class Texture {
             assert false : "Error: (Texture) Could not load image '" + filepath + "'";
         }
         
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         stbi_image_free(image);
         unbind();
     }

@@ -18,8 +18,8 @@ public class Window {
 
 	public static int framebufferImageBinding;
 
-	private int width = 1600;
-	private int height = 1200;
+	private int width = 800;
+	private int height = 600;
 
 	public static int tex_output;
 
@@ -50,7 +50,7 @@ public class Window {
 
 	int screenTex;
 
-	public static Texture skybox;
+	public static Texture skybox, blurred_skybox;
 
 	public static float dx, dy;
 
@@ -85,8 +85,9 @@ public class Window {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 		window = glfwCreateWindow(width, height, "Window", 0, 0);
+		glfwSetWindowPos(window, 500, 200); 
 		glfwMakeContextCurrent(window);
-		//glfwSwapInterval(0);
+		glfwSwapInterval(0);//disable vsync                                            
 		GL.createCapabilities();
 
 		glfwSetCursorPosCallback(window, cursor);
@@ -103,7 +104,8 @@ public class Window {
 
 		createTexture();
 		vaoID = glGenVertexArrays();
-		skybox = new Texture( new File("./raymarcher_demo/resources/street.JPG").getAbsolutePath());
+		skybox = new Texture( new File("./raymarcher_demo/resources/shanghai.jpg").getAbsolutePath());
+		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/shanghai_blurred.png").getAbsolutePath());
 
 		glBindVertexArray(vaoID);
 
@@ -150,6 +152,11 @@ public class Window {
 			glBindTexture(GL_TEXTURE_2D, skybox.texID);
 			glBindImageTexture(1, skybox.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
 			glBindTextureUnit(1, skybox.texID);
+
+			glActiveTexture(GL_TEXTURE0+2);
+			glBindTexture(GL_TEXTURE_2D, blurred_skybox.texID);
+			glBindImageTexture(2, blurred_skybox.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
+			glBindTextureUnit(2, blurred_skybox.texID);
 
 			cs.disp();
 			// glBindImageTexture(0, 0, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);

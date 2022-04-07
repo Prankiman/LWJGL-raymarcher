@@ -33,11 +33,11 @@ float kernel2[9] = float[]
 
 void main(){
 
-    float exposure = 0.7;
+    float exposure = 2;
     float gamma = 0.6;
 
     for(int i = 0; i < 9; i++)
-        t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625*vec3(1.2,1.1,0.9);
+        t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
 
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
     color =vec4(pow(toneMapped, vec3(1/gamma)),1);
