@@ -239,8 +239,8 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
             vec4 c = vec4(spec,1)+
             //blending color according to the relative distance between objects
-            (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
-            vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10))*globe_lum;
+            (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*1,1)+
+            vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*1,1))*globe_lum;
             
             // color = vec4(current_position+vec3(0.5,0.5,0.5),1)*(vec4(20)/num_steps);
             
