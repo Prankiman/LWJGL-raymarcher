@@ -106,9 +106,9 @@ public class Window {
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
 		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR_blurred.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_NormalGL.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
-		displace =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/Fabric_Knitted_006_normal.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Fabric_Knitted_006_basecolor.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./raymarcher_demo/resources/Fabric_Knitted_006_height.png").getAbsolutePath());
  
 		glBindVertexArray(vaoID);
 

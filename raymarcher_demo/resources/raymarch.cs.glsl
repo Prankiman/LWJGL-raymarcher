@@ -10,8 +10,8 @@ layout (binding = 3) uniform sampler2D normal_map;
 layout (binding = 4) uniform sampler2D sphere_tex;
 layout (binding = 5) uniform sampler2D displace;
 
-float smoothness = 0.1;
-int num_reflections = 2;
+float smoothness = 0.00001;
+int num_reflections = 4;
 
 
 // uniform float xx;
@@ -199,13 +199,13 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
         float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        distance_to_closest = dist(current_position)-disp*0.12;//displace sphere based on displacement map
+        distance_to_closest = dist(current_position)-disp*0.09;//displace sphere based on displacement map
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
             normal = calculate_normal(current_position);
 
-            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps);
+            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps/(1+distance_to_closest));
 
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
