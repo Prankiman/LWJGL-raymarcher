@@ -50,7 +50,7 @@ public class Window {
 
 	int screenTex;
 
-	public static Texture skybox, blurred_skybox, normal, sphere_tex;
+	public static Texture skybox, blurred_skybox, normal, sphere_tex, displace;
 
 	public static float dx, dy;
 
@@ -106,8 +106,9 @@ public class Window {
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
 		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR_blurred.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/metal_plates006_8k_normal.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/MetalPlates006_8K_Color.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_NormalGL.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
  
 		glBindVertexArray(vaoID);
 
@@ -169,6 +170,11 @@ public class Window {
 			glBindTexture(GL_TEXTURE_2D, sphere_tex.texID);
 			glBindImageTexture(4, sphere_tex.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
 			glBindTextureUnit(4, sphere_tex.texID);
+
+			glActiveTexture(GL_TEXTURE0+5);
+			glBindTexture(GL_TEXTURE_2D, displace.texID);
+			glBindImageTexture(5, displace.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
+			glBindTextureUnit(5, displace.texID);
 
 			cs.disp();
 			// glBindImageTexture(0, 0, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);

@@ -8,8 +8,9 @@ layout (binding = 1)  uniform sampler2D skybox;
 layout (binding = 2) uniform sampler2D blurred_sky;
 layout (binding = 3) uniform sampler2D normal_map;
 layout (binding = 4) uniform sampler2D sphere_tex;
+layout (binding = 5) uniform sampler2D displace;
 
-float reflectivity = 0.01;
+float smoothness = 0.1;
 int num_reflections = 2;
 
 
@@ -37,9 +38,6 @@ mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  
 mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
 
 vec3 rotateYP(vec3 v, float yaw, float pitch) {
-
-    
-
     //needs to be in radians
     float yawRads = yaw;
     float pitchRads = pitch;
@@ -157,7 +155,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
+    return sphere_dist(pos);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
@@ -172,80 +170,75 @@ vec3 calculate_normal(vec3 p){
 	return normalize(vec3(gx,gy,gz));
 }
 
-vec2 offsets[9] = vec2[]
-(
-    vec2(-1,  1), vec2( 0.0f,    1), vec2( 1,  1),
-    vec2(-1,  0.0f),     vec2( 0.0f,    0.0f),     vec2( 1,  0.0f),
-    vec2(-1, -1), vec2( 0.0f,   -1), vec2( 1, -1) 
-);
-
-float blur[9] = float[]
-(
-   1, 2, 1,
-   2, 4, 2,
-   1, 2, 1
-);
-
-vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
+vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 {
     //off is used so that the reflection direction doesn't intersect the object it bounced off from;
     float total_distance_traveled = 0;
-    float MINIMUM_HIT_DISTANCE = 0.001;
-    float MAXIMUM_TRACE_DISTANCE = 40;
+    float MINIMUM_HIT_DISTANCE = 0.01;
+    float MAXIMUM_TRACE_DISTANCE = 60;
     int num_steps = 0;
 
-    vec3 ind_diff;
+    float reflectivity = 1;
 
     vec3 current_position;
     
     float distance_to_closest;
-    vec3 normall = calculate_normal(ro);
+    vec3 normal = calculate_normal(ro);
 
-    normall *= texture(normal_map, vec2(0.5+atan(normall.x, normall.z)*0.16, 0.5+asin(-normall.y)*0.32)).xyz;
+    normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
      if(refl)        
-        rd = rd-normall*2*dot(rd, normall);//reflecting the direction vector
+        rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
     
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {
-
+        
         current_position = ro + (total_distance_traveled+off) * rd;
 
-        distance_to_closest = dist(current_position);
+        vec3 temp_normal = calculate_normal(current_position);
+
+        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+
+        distance_to_closest = dist(current_position)-disp*0.12;//displace sphere based on displacement map
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
-                
-            vec3 normal = calculate_normal(current_position);
+            normal = calculate_normal(current_position);
 
-            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32));
+            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps);
 
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
+
+            if(smoothness < 1)
+                reflectivity = max(0,dot(rd, normal)*smoothness);//fresnel effect
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
             //direct diffuse ligthing
-            float diffuse = 0.5+max(0,dot(normal, direction_to_light));//diffuse lighting
-           
+            float diffuse = 0.6+max(0,dot(normal, direction_to_light));//diffuse lighting
+        
             vec3 spec = vec3(0);//specular lighting
 
             float shine_dampening = 4;
             
             //direct specular ligthing
             if(refl)
-                spec = vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
+                spec = vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening))*reflectivity;//don't need to reflect rd further since it's been reflected alreadt
             
-            vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 11);
+            vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 40);
 
             vec4 c = vec4(spec,1)+
-            //blending color according to the relative distance between objects
-            (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10)+
-            vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position))*10,10))*globe_lum;
+            
+            sphere_text*indirect_diffuse*diffuse;
+
+            //blending color according to the relative distance between the sphere/s and the cuboid
+            (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1)+
+            vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1))*globe_lum;
             
             // color = vec4(current_position+vec3(0.5,0.5,0.5),1)*(vec4(20)/num_steps);
             
             
-            return vec4[2](vec4(c.x, c.y, c.z, 1 ), vec4(current_position, 1));
+            return vec4[3](vec4(c.x, c.y, c.z, 1 ), vec4(current_position, 1), vec4(0,0,0,reflectivity));
            
 
         }
@@ -255,8 +248,9 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         total_distance_traveled += distance_to_closest;
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
         {
-            
-           break;
+            if(smoothness < 1)
+                reflectivity = max(0,dot(rd, normal)*smoothness);
+            break;
         }
     }
 
@@ -276,17 +270,18 @@ vec4[2] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
     float temp_bright = (temp.x+temp.y+temp.z);
     if(!refl)
-         return vec4[2](temp, vec4(0));
-    return vec4[2](temp*temp_bright, vec4(0));
+         return vec4[3](temp, vec4(0), vec4(0,0,0,reflectivity));
+    return vec4[3](temp*temp_bright, vec4(0), vec4(0,0,0,reflectivity));
 }
 
 
 void main() {    
 
-    vec4[2] temp = ray_march(orig+cam, dir, false, 0);
+    vec4[3] temp = ray_march(orig+cam, dir, false, 0);
     vec4 temp_color = temp[0];
     for (int i = 0; i < num_reflections; i++){ 
         if(temp[1].w == 1){
+            float reflectivity = temp[2].w;
             //blend reflected color and color based on reflecticity
             temp = ray_march(temp[1].xyz, dir, true, i);
             temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
