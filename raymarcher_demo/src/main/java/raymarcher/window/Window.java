@@ -146,7 +146,7 @@ public class Window {
 			// Creates new title
 			int FPS = (int)((1.0 / timeDiff) * counter);
 			int  ms = (int)((timeDiff / counter) * 1000);
-			String newTitle = "YoutubeOpenGL - " + FPS + "FPS / " + ms + "ms";
+			String newTitle = "raymcarching - " + FPS + "FPS / " + ms + "ms";
 			glfwSetWindowTitle(window, newTitle);
 
 			// Resets times and counter
