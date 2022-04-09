@@ -9,9 +9,10 @@ layout (binding = 2) uniform sampler2D blurred_sky;
 layout (binding = 3) uniform sampler2D normal_map;
 layout (binding = 4) uniform sampler2D sphere_tex;
 layout (binding = 5) uniform sampler2D displace;
+layout (binding = 6) uniform sampler2D metal;
+layout (binding = 7) uniform sampler2D roughness;
 
-float smoothness = 0.0003;
-int num_reflections = 4;
+int num_reflections = 2;
 
 
 // uniform float xx;
@@ -175,7 +176,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     //off is used so that the reflection direction doesn't intersect the object it bounced off from;
     float total_distance_traveled = 0;
     float MINIMUM_HIT_DISTANCE = 0.01;
-    float MAXIMUM_TRACE_DISTANCE = 60;
+    float MAXIMUM_TRACE_DISTANCE = 40;
     int num_steps = 0;
 
     float reflectivity = 1;
@@ -183,9 +184,12 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     vec3 current_position;
     
     float distance_to_closest;
+
     vec3 normal = calculate_normal(ro);
 
-    normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
+    float metalness = texture(metal,  vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).x;//used to determine specular lighting
+
+    normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;//applying normal map
 
      if(refl)        
         rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
@@ -197,9 +201,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
         vec3 temp_normal = calculate_normal(current_position);
 
+        float smoothness = 1-texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x*3000;
+
         float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        distance_to_closest = dist(current_position)-disp*0.09;//displace sphere based on displacement map
+        distance_to_closest = dist(current_position)-disp*0.08;//displace sphere based on displacement map
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
@@ -207,10 +213,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
             vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps);//devide over number of steps to get ambient occlusion
 
+            
+
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
-            if(smoothness < 1)
-                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness);//fresnel effect
+            reflectivity = max(0,(1-dot(rd, normal))*smoothness);//fresnel effect
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
@@ -222,7 +229,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
             float shine_dampening = 4;
             
             //direct specular ligthing
-            if(refl)
+            if(refl && metalness > 0.5)
                 spec = vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening))*reflectivity;//don't need to reflect rd further since it's been reflected alreadt
             
             vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 40);
@@ -248,7 +255,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
         {
             if(smoothness < 1)
-                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness);
+                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness*smoothness);
             break;
         }
     }
@@ -263,7 +270,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
     //return skycolor
     vec4 temp;
-    if(reflectivity > 0.9 || !refl)
+    if(metalness > 0.5 || !refl)
         temp = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else 
         temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
