@@ -10,7 +10,7 @@ layout (binding = 3) uniform sampler2D normal_map;
 layout (binding = 4) uniform sampler2D sphere_tex;
 layout (binding = 5) uniform sampler2D displace;
 
-float smoothness = 0.004;
+float smoothness = 0.0003;
 int num_reflections = 4;
 
 
@@ -205,12 +205,12 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
             normal = calculate_normal(current_position);
 
-            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps/(1+distance_to_closest));
+            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps);//devide over number of steps to get ambient occlusion
 
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
             if(smoothness < 1)
-                reflectivity = max(0,(1-dot(rd, normal))*smoothness);//fresnel effect
+                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness);//fresnel effect
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
@@ -248,7 +248,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
         {
             if(smoothness < 1)
-                reflectivity = max(0,(1-dot(rd, normal))*smoothness);
+                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness);
             break;
         }
     }
