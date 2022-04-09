@@ -23,9 +23,9 @@ public class Texture {
         // Repeat image in both directions
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // When stretching the image, pixelate
+        // When stretching the image
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // When shrinking an image, pixelate
+        // When shrinking an image
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         IntBuffer width = BufferUtils.createIntBuffer(1);

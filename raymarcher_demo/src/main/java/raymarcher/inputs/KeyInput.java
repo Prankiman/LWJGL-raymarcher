@@ -35,6 +35,13 @@ public class KeyInput extends GLFWKeyCallback{
         if(key == GLFW_KEY_LEFT_SHIFT && action != GLFW_RELEASE){
             Window.cam.y += 0.1f;
         }
+
+        if(key == GLFW_KEY_P && action != GLFW_RELEASE && Window.res > 1){
+            Window.res -= 1f;
+        }
+        if(key == GLFW_KEY_O && action != GLFW_RELEASE && Window.res < 16){
+            Window.res += 1f;
+        }
         
     }
 

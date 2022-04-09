@@ -25,7 +25,7 @@ public class Window {
 
     public static int tex_output_temp;
 
-	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID/*, uniform5ID*/;
+	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID, uniform5ID, uniform6ID;
 	public static float xx = 0;
 
 	public static float camx = 0, camy = 0, camz = 0;
@@ -52,7 +52,7 @@ public class Window {
 
 	public static Texture skybox, blurred_skybox, normal, sphere_tex, displace, metal, roughness;
 
-	public static float dx, dy;
+	public static float dx, dy, res = 16;
 
 	private Window() {}
 
@@ -123,6 +123,8 @@ public class Window {
 		uniformID = glGetUniformLocation(cs.programID, "mouse_xy");
 		uniform3ID = glGetUniformLocation(cs.programID, "orig");
 		uniform4ID = glGetUniformLocation(shader.programID, "tex");
+		uniform5ID = glGetUniformLocation(shader.programID, "res");
+		uniform6ID = glGetUniformLocation(cs.programID, "res");
 
 		shader.stop();
 
@@ -148,7 +150,7 @@ public class Window {
 			// Creates new title
 			int FPS = (int)((1.0 / timeDiff) * counter);
 			int  ms = (int)((timeDiff / counter) * 1000);
-			String newTitle = "raymcarching - " + FPS + "FPS / " + ms + "ms";
+			String newTitle = "Use P to increase resolution and O to decrease resolution- " + FPS + "FPS / " + ms + "ms";
 			glfwSetWindowTitle(window, newTitle);
 
 			// Resets times and counter
@@ -170,6 +172,7 @@ public class Window {
 			glUniform1f(uniform2ID, xx);
 			glUniform2f(uniformID, dx*2, dy*2);
 			glUniform3f(uniform3ID, cam.x, cam.y, cam.z);
+			glUniform1f(uniform6ID, res);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, texBuff, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
@@ -220,6 +223,7 @@ public class Window {
 			shader.use();
 			Render.render(vaoID, model);
 
+			glUniform1f(uniform5ID, res);
 			glUniform1i(uniform4ID, 0);
 
 			shader.stop();

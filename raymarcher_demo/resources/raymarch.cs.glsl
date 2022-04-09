@@ -13,9 +13,9 @@ layout (binding = 6) uniform sampler2D metal;
 layout (binding = 7) uniform sampler2D roughness;
 
 int num_reflections = 2;
-
-
 // uniform float xx;
+
+uniform float res;
 
 float xx = 2;
 
@@ -76,8 +76,7 @@ ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 //normalized pixel coordiantes
 float xu = (float(pixel_coords.x*2 - width)/width/0.75);
 float yu = 1-(float(pixel_coords.y*2 - height)/height);
-// float xu = float(pixel_coords.x/800-1)/0.75;
-// float yu = 1-float(pixel_coords.y/600);
+
 
 vec3 comp = vec3(xu, yu, -1);
 
@@ -281,16 +280,19 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 }
 
 
-void main() {    
+void main() {   
+    vec4 temp_color = vec4(0); 
 
-    vec4[3] temp = ray_march(orig+cam, dir, false, 0);
-    vec4 temp_color = temp[0];
-    for (int i = 0; i < num_reflections; i++){ 
-        if(temp[1].w == 1){
-            float reflectivity = temp[2].w;
-            //blend reflected color and color based on reflecticity
-            temp = ray_march(temp[1].xyz, dir, true, i);
-            temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
+    if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
+        vec4[3] temp = ray_march(orig+cam, dir, false, 0);
+        temp_color = temp[0];
+        for (int i = 0; i < num_reflections; i++){ 
+            if(temp[1].w == 1){
+                float reflectivity = temp[2].w;
+                //blend reflected color and color based on reflecticity
+                temp = ray_march(temp[1].xyz, dir, true, i);
+                temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
+            }
         }
     }
     color = temp_color;

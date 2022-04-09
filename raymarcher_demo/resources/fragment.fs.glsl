@@ -4,12 +4,20 @@ in vec2 texCoord;
 uniform sampler2D tex;
 uniform sampler2D tex2;
 
+uniform float res;//resolution variable
+
 out vec4 color;
+
+float ww = 1600.0f;
+float hh = 1200.0f;
+
+vec2 pix_coord = texCoord*vec2(ww, hh);
 
 vec3 t;
 
-const float offset_x = 1.0f / 1600.0f;  
-const float offset_y = 1.0f / 1200.0f;  
+
+float offset_x = 1.0f / ww;  
+float offset_y = 1.0f / hh;  
 
 vec2 offsets[9] = vec2[]
 (
@@ -36,9 +44,16 @@ void main(){
     float exposure = 4;
     float gamma = 1;
 
-    for(int i = 0; i < 9; i++)
-        t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
+    vec2 off = pix_coord-mod(pix_coord, res);
 
+    //swizzle suffixes: xyzw, stpq, rgba
+
+    if(res == 1){
+        for(int i = 0; i < 9; i++)
+            t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
+    }
+    else
+        t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
     color =vec4(pow(toneMapped, vec3(1/gamma)),1);
 
