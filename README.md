@@ -4,6 +4,11 @@ ray marching in opengl lwjgl using compute shader
 ![Screenshot 2022-04-07 184433](https://user-images.githubusercontent.com/69918769/162256259-6ef320d5-07cc-42da-8f2d-8b55943acbd4.png)
 ![Screenshot 2022-04-07 223739](https://user-images.githubusercontent.com/69918769/162292044-5137f2a6-5382-4423-8f15-26217d77a560.png)
 ![Screenshot 2022-04-08 232241](https://user-images.githubusercontent.com/69918769/162566904-567329ad-7324-4caf-83fb-d55fef9e0110.png)
+large pixel size:
+![Screenshot 2022-04-10 013526](https://user-images.githubusercontent.com/69918769/162595100-d277d8d9-a3b9-4d7f-aad9-d0f47db4fd98.png)
+small pixel size:
+![Screenshot 2022-04-10 001351](https://user-images.githubusercontent.com/69918769/162595105-d5a341ad-0a26-4100-9613-3407becc8c88.png)
 ![Screenshot 2022-03-14 220852](https://user-images.githubusercontent.com/69918769/158261866-09fe3269-94aa-4188-b0c8-d26f5017e839.png)
+
 
 
