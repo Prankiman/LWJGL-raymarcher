@@ -130,10 +130,33 @@ public class Window {
 
 		glfwShowWindow(window);
 	}
+	double crntTime = 0, timeDiff, counter, prevTime = 0;
 
 	public void loop() {
 
 		while (!glfwWindowShouldClose(window)) {
+
+			// Updates counter and times
+		crntTime = glfwGetTime();
+		timeDiff = crntTime - prevTime;
+		counter++;
+
+		if (timeDiff >= 1.0 / 30.0)
+		{
+			// Creates new title
+			int FPS = (int)((1.0 / timeDiff) * counter);
+			int  ms = (int)((timeDiff / counter) * 1000);
+			String newTitle = "YoutubeOpenGL - " + FPS + "FPS / " + ms + "ms";
+			glfwSetWindowTitle(window, newTitle);
+
+			// Resets times and counter
+			prevTime = crntTime;
+			counter = 0;
+
+			// Use this if you have disabled VSync
+			//camera.Inputs(window);
+		}
+
 			glfwPollEvents();
 			//glViewport(0, 0, width, height);
 
