@@ -9,7 +9,7 @@ uniform float res;//resolution variable
 out vec4 color;
 
 float ww = 1600.0f;
-float hh = 1200.0f;
+float hh = 1000.0f;
 
 vec2 pix_coord = texCoord*vec2(ww, hh);
 

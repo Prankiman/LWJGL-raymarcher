@@ -28,7 +28,9 @@ uniform vec3 orig;
 
 int width = 1600;
 
-int height = 1200;
+int height = 1000;
+
+float inverse_aspect = 0.625;
 
 vec2 sphere_xy = 2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
 
@@ -75,7 +77,7 @@ vec3 cam = vec3(0, 0, -5);
 
 ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 //normalized pixel coordiantes
-float xu = (float(pixel_coords.x*2 - width)/width/0.75);
+float xu = (float(pixel_coords.x*2 - width)/width/inverse_aspect);
 float yu = 1-(float(pixel_coords.y*2 - height)/height);
 
 

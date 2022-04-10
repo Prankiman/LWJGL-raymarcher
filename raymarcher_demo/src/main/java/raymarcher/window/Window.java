@@ -19,7 +19,7 @@ public class Window {
 	public static int framebufferImageBinding;
 
 	private int width = 1600;
-	private int height = 1200;
+	private int height = 1000;
 
 	public static int tex_output;
 
