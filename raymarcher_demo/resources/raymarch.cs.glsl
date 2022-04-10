@@ -13,11 +13,12 @@ layout (binding = 6) uniform sampler2D metal;
 layout (binding = 7) uniform sampler2D roughness;
 
 int num_reflections = 2;
-// uniform float xx;
+
+uniform float xx;
 
 uniform float res;
 
-float xx = 2;
+// float xx = 2;
 
 uniform int fxaa;
 
@@ -59,7 +60,7 @@ vec3 rotateYP(vec3 v, float yaw, float pitch) {
     return rotateX;
 }
 
-vec3 pos = vec3(2+xx,0,2);//vec3(sphere_xy, 2);//sphere position
+vec3 pos = vec3(2,0,2);//vec3(sphere_xy, 2);//sphere position
 
 float rad = 1.2;//sphere radius
 
@@ -155,7 +156,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return sphere_dist(pos);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
+    return smin(sphere_dist(pos), sphere_dist(pos-vec3(0,0,xx)), 2);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
