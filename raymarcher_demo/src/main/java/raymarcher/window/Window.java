@@ -50,7 +50,7 @@ public class Window {
 
 	int screenTex;
 
-	public static Texture skybox, blurred_skybox, normal, sphere_tex, displace, metal, roughness;
+	public static Texture skybox, normal, sphere_tex, displace, metal, roughness;
 
 	public static float dx, dy, res = 16;
 
@@ -105,7 +105,6 @@ public class Window {
 		createTexture();
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		blurred_skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR_blurred.hdr").getAbsolutePath());
 		normal  = new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_NormalDX.jpg").getAbsolutePath());
 		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
 		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
@@ -185,34 +184,29 @@ public class Window {
 			glBindTextureUnit(1, skybox.texID);
 
 			glActiveTexture(GL_TEXTURE0+2);
-			glBindTexture(GL_TEXTURE_2D, blurred_skybox.texID);
-			glBindImageTexture(2, blurred_skybox.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
-			glBindTextureUnit(2, blurred_skybox.texID);
+			glBindTexture(GL_TEXTURE_2D, normal.texID);
+			glBindImageTexture(2, normal.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
+			glBindTextureUnit(2, normal.texID);
 
 			glActiveTexture(GL_TEXTURE0+3);
-			glBindTexture(GL_TEXTURE_2D, normal.texID);
-			glBindImageTexture(3, normal.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
-			glBindTextureUnit(3, normal.texID);
+			glBindTexture(GL_TEXTURE_2D, sphere_tex.texID);
+			glBindImageTexture(3, sphere_tex.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
+			glBindTextureUnit(3, sphere_tex.texID);
 
 			glActiveTexture(GL_TEXTURE0+4);
-			glBindTexture(GL_TEXTURE_2D, sphere_tex.texID);
-			glBindImageTexture(4, sphere_tex.texID, 0, false, 0, GL_READ_ONLY, GL_RGBA);
-			glBindTextureUnit(4, sphere_tex.texID);
+			glBindTexture(GL_TEXTURE_2D, displace.texID);
+			glBindImageTexture(4, displace.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
+			glBindTextureUnit(4, displace.texID);
 
 			glActiveTexture(GL_TEXTURE0+5);
-			glBindTexture(GL_TEXTURE_2D, displace.texID);
-			glBindImageTexture(5, displace.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
-			glBindTextureUnit(5, displace.texID);
+			glBindTexture(GL_TEXTURE_2D, metal.texID);
+			glBindImageTexture(5, metal.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
+			glBindTextureUnit(5, metal.texID);
 
 			glActiveTexture(GL_TEXTURE0+6);
-			glBindTexture(GL_TEXTURE_2D, metal.texID);
-			glBindImageTexture(6, metal.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
-			glBindTextureUnit(6, metal.texID);
-
-			glActiveTexture(GL_TEXTURE0+7);
 			glBindTexture(GL_TEXTURE_2D, roughness.texID);
-			glBindImageTexture(7, roughness.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
-			glBindTextureUnit(7, roughness.texID);
+			glBindImageTexture(6, roughness.texID, 0, false, 0, GL_READ_ONLY, GL_LUMINANCE);
+			glBindTextureUnit(6, roughness.texID);
 
 			cs.disp();
 			// glBindImageTexture(0, 0, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
