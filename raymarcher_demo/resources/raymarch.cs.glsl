@@ -85,9 +85,7 @@ vec3 comp = vec3(xu, yu, -1);
 
 vec3 dir = normalize(comp-cam)*rotx*roty;
 
-vec3 light_position = vec3(-10,20, 0.5);
-
-float globe_lum = 2;
+vec3 light_position = vec3(-50,5, 0);
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -181,7 +179,13 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
     float MAXIMUM_TRACE_DISTANCE = 40;
     int num_steps = 0;
 
-    float reflectivity = 1;
+    float reflectivity;
+
+    float rough;
+
+    float kd;//used to determine how much specular light should be present
+
+    float ks;//used to determine how much diffise light should be present (1-kd)
 
     vec3 current_position;
     
@@ -189,12 +193,12 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
     vec3 normal = calculate_normal(ro);
 
-    float metalness = texture(metal,  vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).x;//used to determine specular lighting
+    float metalness;
 
     normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;//applying normal map
 
-     if(refl)        
-        rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
+    if(refl)        
+       rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
     
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {
@@ -203,50 +207,84 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        float smoothness = 1-texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x*3000;
+        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;//used to determine specular lighting
+
+        vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32));
+       
+        rough = texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x*3;
+
+        float smoothness = max(0,1-rough);
 
         float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
+        float fresnel_effect = 1-dot(rd, normal);//the surface should be more reflective if the viewing vector is perpendicular to the surfice normal and vice versa
+        
+        
         distance_to_closest = dist(current_position)-disp*0.08;//displace sphere based on displacement map
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
             normal = calculate_normal(current_position);
 
-            vec4 sphere_text = texture(sphere_tex, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32))/max(1,num_steps);//devide over number of steps to get ambient occlusion
-
-            
-
             normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
 
-            reflectivity = max(0,(1-dot(rd, normal))*smoothness);//fresnel effect
+            fresnel_effect = 1-dot(rd, normal);
+
+            reflectivity = min((0.1*smoothness+metalness*0.9)*max(0,fresnel_effect*smoothness),1);
 
             vec3 direction_to_light = normalize(current_position- light_position);
 
-            //direct diffuse ligthing
-            float diffuse = 0.6+max(0,dot(normal, direction_to_light));//diffuse lighting
-        
-            vec3 spec = vec3(0);//specular lighting
+            vec3 half_v  = (direction_to_light+rd)/length(direction_to_light+rd);
 
-            float shine_dampening = 4;
+           
+             vec3 spec = vec3(0);
+           
+            //____________SPECULAR LIGHTING________________
+            kd = max(metalness*0.01, 0.0001)*(smoothness+(1-smoothness)*pow(1-dot(rd, half_v),5));
+            //float shine_dampening = 4;
             
-            //direct specular ligthing
-            if(refl && metalness > 0.5)
-                spec = vec3(pow(max(min(1,-dot(rd, -direction_to_light)), 0), shine_dampening))*reflectivity;//don't need to reflect rd further since it's been reflected alreadt
+            //specular ligthing -> the more aligned the reflection vector and light vector are the more highlighted the point should be:
+            //Heidrich–Seidel anisotropic distribution-> (vector_from_poitn_to_viewer dot vector_from_point_to_light)^shine_dampening
+            //Cook–Torrance model -> DFG/(4(V dot N)(N dot L))
+        
+            //using Heidrich-Seidel:
+            //vec3 spec = kd*metalness*vec3(pow(max(dot(-rd, direction_to_light), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
             
-            vec4 indirect_diffuse = 1+textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 40);
+            //using Cook-Torrance:
+
+            float D = rough*rough/(3.141*pow((pow(dot(normal,half_v), 2)*(rough*rough-1)+1),2));
+
+            float k = rough*rough/2;
+
+            vec3 X = rd;//viewing vector or light vector
+            
+            float G = dot(normal, X)/(dot(normal,X)*(1-k)+k);
+
+            vec3 ref_light = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity)).xyz;
+
+            spec = ref_light*kd+vec3(D*G*kd/(4*dot(rd, normal)*dot(normal, direction_to_light)));
+            //_________________________________________________
+
+            //_________________DIFFUSE LIGTHING___________________________
+            //direct diffuse ligthing
+
+            ks = 1-kd;
+            vec4 diffuse = ks*vec4(max(0,dot(normal, direction_to_light)));//diffuse lighting
+
+            vec4 indirect_diffuse = max(textureLod(blurred_sky, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 40),1);
+            
+            vec4 tot_diffuse = ks*indirect_diffuse+diffuse*dot(direction_to_light, normal)/3.141;
+            //_____________________________________________________________________
 
             vec4 c = vec4(spec,1)+
             
-            sphere_text*indirect_diffuse*diffuse;
+            sphere_text*tot_diffuse/(max(1,num_steps));//devide over number of steps to get ambient occlusion
 
             //blending color according to the relative distance between the sphere/s and the cuboid
             // (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1)+
-            // vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1))*globe_lum;
+            // vec4(0,1,0, 1)*diffuse*sphere_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1));
             
-            // color = vec4(current_position+vec3(0.5,0.5,0.5),1)*(vec4(20)/num_steps);
-            
-            return vec4[3](vec4(c.x, c.y, c.z, 1 ), vec4(current_position, 1), vec4(0,0,0,reflectivity));
+            return vec4[3](vec4(c.xyz, 1 ), vec4(current_position, 1), vec4(0,0,0, reflectivity));
            
 
         }
@@ -256,30 +294,19 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         total_distance_traveled += distance_to_closest;
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
         {
-            if(smoothness < 1)
-                reflectivity = max(smoothness,(1-dot(rd, normal))*smoothness*smoothness);
+            
+            reflectivity = min((0.1*smoothness+metalness*0.9)*max(0,fresnel_effect*smoothness),1);
             break;
         }
     }
 
-    //GLOW EFFECT
-    //-------------------------
-    // if(0.03*(num_steps)>= 1)
-    //     return  vec4(0,1,1,1);
-    // if(0.01*(num_steps)>= 0.1)
-    //     return  vec4(0,1,1,1)*vec4(0.001)*(min(1000,num_steps));
-    //----------------------------------------
-
     //return skycolor
     vec4 temp;
-    if(metalness > 0.5 || !refl)
+    if(metalness > 0.9 || !refl)
         temp = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else 
         temp = textureLod(blurred_sky, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1/min(1,reflectivity));//change mipmap level depending on reflectivity
-    float temp_bright = (temp.x+temp.y+temp.z);
-    if(!refl)
-         return vec4[3](temp, vec4(0), vec4(0,0,0,reflectivity));
-    return vec4[3](temp*temp_bright, vec4(0), vec4(0,0,0,reflectivity));
+    return vec4[3](temp, vec4(0), vec4(0,0,0,reflectivity));
 }
 
 
@@ -289,12 +316,14 @@ void main() {
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
         vec4[3] temp = ray_march(orig+cam, dir, false, 0);
         temp_color = temp[0];
+        float reflectivity = temp[2].w;
         for (int i = 0; i < num_reflections; i++){ 
             if(temp[1].w == 1){
-                float reflectivity = temp[2].w;
+                reflectivity*=temp[2].w;
                 //blend reflected color and color based on reflecticity
                 temp = ray_march(temp[1].xyz, dir, true, i);
-                temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
+                temp_color = temp_color*(1-reflectivity)+(temp[0]*reflectivity);
+                
             }
         }
     }
