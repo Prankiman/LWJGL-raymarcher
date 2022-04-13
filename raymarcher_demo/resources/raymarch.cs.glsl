@@ -2,6 +2,9 @@
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
+precision lowp float;
+precision lowp int;
+precision lowp sampler2D;
 
 layout (rgba32f, binding = 0)  writeonly uniform image2D ftex;
 layout (binding = 1)  uniform sampler2D skybox;
@@ -31,9 +34,7 @@ int height = 1000;
 
 float inverse_aspect = 0.625;
 
-vec2 sphere_xy = 2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
-
-vec2 cam_rot_xy= sphere_xy*0.1;
+vec2 cam_rot_xy= 0.2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
 
 vec4 color;
 
@@ -61,7 +62,7 @@ vec3 rotateYP(vec3 v, float yaw, float pitch) {
     return rotateX;
 }
 
-vec3 pos = vec3(2,0,2);//vec3(sphere_xy, 2);//sphere position
+vec3 pos = vec3(2,0,2);//sphere position
 
 float rad = 1.2;//sphere radius
 
@@ -237,18 +238,14 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
             vec3 direction_to_light = normalize(light_position-current_position);
 
-            vec3 half_v  = (direction_to_light+rd)/length(direction_to_light+rd);
+            vec3 half_v  = normalize(direction_to_light+rd);
             //---------------------------------------------------
            
             //____________SPECULAR LIGHTING________________
             ks =  (base_refl+(1-base_refl)*pow(1-dot(rd, half_v),5));
             float shine_dampening = 5;
             
-            //specular ligthing -> the more aligned the reflection vector and light vector are the more highlighted the point should be:
-            //Heidrich–Seidel anisotropic distribution-> (vector_from_poitn_to_viewer dot vector_from_point_to_light)^shine_dampening
-            //Cook–Torrance model -> DFG/(4(V dot N)(N dot L))
-        
-            //using Heidrich-Seidel:
+            
             vec3 spec = metalness*ks*vec3(pow(max(dot(-rd, direction_to_light), 0), shine_dampening));//don't need to reflect rd further since it's been reflected alreadt
 
             //_________________________________________________
@@ -265,7 +262,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
             //_____________________________________________________________________
 
             vec4 c = (indirect_diffuse+vec4(max(0,dot(normal, direction_to_light)))
-            *(vec4(spec,1)+diffuse))/(max(1,num_steps));//devide over number of steps for ambient occlusion
+            *(vec4(spec,1)+diffuse))/(max(1.0f,0.01f*num_steps));//devide over number of steps for ambient occlusion
 
             //blending color according to the relative distance between the sphere/s and the cuboid
             // (sphere_text*indirect_diffuse*diffuse*rect_dist(current_position)/max((sphere_dist(current_position)+rect_dist(current_position)),1)+

@@ -13,6 +13,13 @@ public class Texture {
     // private String filepath;
    public int texID;
 
+    public Texture() {
+        texID = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, texID);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 1600, 1000);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     public Texture(String filepath) {
         // this.filepath = filepath;
         // Generate texture on GPU

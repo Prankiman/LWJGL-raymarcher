@@ -2,7 +2,6 @@
 
 in vec2 texCoord;
 uniform sampler2D tex;
-uniform sampler2D tex2;
 
 uniform float res;//resolution variable
 
@@ -41,8 +40,8 @@ float kernel2[9] = float[]
 
 void main(){
 
-    float exposure = 5;
-    float gamma = 0.7;
+    float exposure = 1;
+    float gamma = 0.75;
 
     vec2 off = pix_coord-mod(pix_coord, res);
 
@@ -53,7 +52,8 @@ void main(){
             t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
     }
     else
-        t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
+         t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
+
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
     color =vec4(pow(toneMapped, vec3(1/gamma)),1);
 

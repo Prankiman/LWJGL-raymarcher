@@ -25,7 +25,7 @@ public class Window {
 
     public static int tex_output_temp;
 
-	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID, uniform5ID, uniform6ID;
+	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID, uniform5ID, uniform6ID, uniform7ID;
 	public static float xx = 0;
 
 	public static float camx = 0, camy = 0, camz = 0;
@@ -50,7 +50,7 @@ public class Window {
 
 	int screenTex;
 
-	public static Texture skybox, normal, sphere_tex, displace, metal, roughness;
+	public static Texture skybox, normal, sphere_tex, displace, metal, roughness, output;
 
 	public static float dx, dy, res = 16;
 
@@ -103,6 +103,7 @@ public class Window {
 		shader.create();
 
 		createTexture();
+		output = new Texture();
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
 		normal  = new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_NormalDX.jpg").getAbsolutePath());
@@ -110,7 +111,7 @@ public class Window {
 		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
 		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
 		roughness =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Roughness.jpg").getAbsolutePath());
- 
+
 		glBindVertexArray(vaoID);
 
 		model = new Model(new Vector3f(0, 0, 0), new Vector2f(1, 1), new Vector3f(0, 0, 0));
@@ -124,6 +125,7 @@ public class Window {
 		uniform4ID = glGetUniformLocation(shader.programID, "tex");
 		uniform5ID = glGetUniformLocation(shader.programID, "res");
 		uniform6ID = glGetUniformLocation(cs.programID, "res");
+		uniform7ID = glGetUniformLocation(cs.programID, "error");
 
 		shader.stop();
 
@@ -174,9 +176,9 @@ public class Window {
 			glUniform1f(uniform6ID, res);
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindImageTexture(0, texBuff, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
-			glBindTexture(GL_TEXTURE_2D, texBuff);
-			glBindTextureUnit(0, texBuff);
+			glBindImageTexture(0, output.texID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
+			glBindTexture(GL_TEXTURE_2D, output.texID);
+			glBindTextureUnit(0, output.texID);
 
 			glActiveTexture(GL_TEXTURE0+1);
 			glBindTexture(GL_TEXTURE_2D, skybox.texID);
@@ -219,6 +221,7 @@ public class Window {
 
 			glUniform1f(uniform5ID, res);
 			glUniform1i(uniform4ID, 0);
+			glUniform1i(uniform7ID, 7);
 
 			shader.stop();
 			glfwSwapBuffers(window);
