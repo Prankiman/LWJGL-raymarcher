@@ -40,7 +40,7 @@ float kernel2[9] = float[]
 
 void main(){
 
-    float exposure = 1;
+    float exposure = 2;
     float gamma = 0.75;
 
     vec2 off = pix_coord-mod(pix_coord, res);

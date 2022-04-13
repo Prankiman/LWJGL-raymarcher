@@ -26,6 +26,8 @@ uniform vec2 mouse_xy;
 
 uniform vec3 orig;
 
+int num_reflections = 5;
+
 int width = 1600;
 
 int height = 1000;
@@ -62,7 +64,7 @@ vec3 rotateYP(vec3 v, float yaw, float pitch) {
 
 vec3 pos = vec3(2,0,2);//sphere position
 
-float rad = 2;//sphere radius
+float rad = 1.2;//sphere radius
 
 vec3 cam = vec3(0, 0, -5);
 
@@ -85,8 +87,8 @@ vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-30,2));
 
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
-	//p.x = (mod((pos.x-p.x),4)-2);
-    return length(pos-p)-rad+displacement;//length(p)-rad+displacement;//
+	p.x = (mod((pos.x-p.x),4)-2);
+    return length(p)-rad+displacement;//length(pos-p)-rad+displacement;//
 }
 
 float smin(float a, float b, float k) {
@@ -95,7 +97,7 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return sphere_dist(pos);//smin(sphere_dist(pos), sphere_dist(pos-vec3(0,0,xx)), 2);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
+    return smin(sphere_dist(pos), sphere_dist(pos-vec3(0,0,xx)), 2);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
@@ -138,15 +140,13 @@ vec3 fresnel_rough(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0)  * pow(1.0 - cosTheta, 5.0);
 }
 
-vec4 ray_march(vec3 ro, vec3 rd)
+vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 {
     //off is used so that the reflection direction doesn't intersect the object it bounced off from;
     float total_distance_traveled = 0;
     float MINIMUM_HIT_DISTANCE = 0.001;
     float MAXIMUM_TRACE_DISTANCE = 40;
     int num_steps = 0;
-
-    float reflectivity;
 
     float rough;
 
@@ -161,15 +161,30 @@ vec4 ray_march(vec3 ro, vec3 rd)
     vec3 normal = calculate_normal(ro);
 
     float metalness;
+
+    float offset = 0;
+
+    if(refl){      
+        rd = (rd-normal*2*dot(rd, normal));//reflecting the direction vector
+        offset = 0.1;
+    }
     
+    vec3 iSpecFac = vec3(1);
+
+    float reflectivity;
+
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {
         
-        current_position = ro + (total_distance_traveled) * rd;
+        current_position = ro + (total_distance_traveled+offset) * rd;
 
-        metalness =  0;
+        metalness =  0.6;
 
-        rough = 0.4;
+        rough = 0.7;
+
+        reflectivity = 1-rough;
+
+        reflectivity = pow(reflectivity, 3);
 
         vec3 albedo = vec3(0.5,0.5,1);
 
@@ -189,6 +204,7 @@ vec4 ray_march(vec3 ro, vec3 rd)
             vec3 N = normal;
             vec3 V = -rd;
            
+           iSpecFac = fresnel_rough(max(dot(N, V), 0.0), F0, rough);
 
             for(int i = 0; i < 3; i++) 
             {
@@ -209,8 +225,7 @@ vec4 ray_march(vec3 ro, vec3 rd)
                 vec3 F    = fresnel_S(max(dot(H, V), 0.0), F0); 
                 kS = F;
             
-                vec3 specular = NDF * F * G /(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001);  
-            
+                vec3 specular = NDF * F * G /(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001);
                 //_________________________________________________
 
                 //_________________DIFFUSE LIGTHING___________________________
@@ -227,17 +242,17 @@ vec4 ray_march(vec3 ro, vec3 rd)
             //indirect diffuse ligthing____________
             vec3 indirectDiffuse = textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 12).rgb;
 
-            vec3 idIntensity = (vec3(1) - fresnel_rough(max(dot(N, V), 0.0), F0, rough)); 
+            vec3 idIntensity = (vec3(1) - iSpecFac); 
 
-            indirectDiffuse*= idIntensity;
-            
+            indirectDiffuse *= idIntensity;
+
             //_____________________________________
 
             vec3 ambient = indirectDiffuse * albedo * ao;
 
             vec4 c = vec4(ambient+Lo, 1);
 
-            return c;
+            return vec4[3] (c, vec4(current_position, 1), vec4(0,0,0, reflectivity));
 
         }
 
@@ -252,8 +267,12 @@ vec4 ray_march(vec3 ro, vec3 rd)
     }
     //return skycolor
     
-    vec4 skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
-    return skycolor;
+    vec4 skycolor;
+    if (!refl)
+        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
+    else
+        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*12);
+    return vec4[3](skycolor, vec4(0), vec4(0,0,0,reflectivity));
 }
 
 
@@ -261,7 +280,18 @@ void main() {
     vec4 temp_color = vec4(0); 
 
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
-        temp_color = ray_march(orig+cam, dir);
+        vec4[3] temp = ray_march(orig+cam, dir, false);
+        temp_color = temp[0];
+        float reflectivity = temp[2].w;
+        for (int i = 0; i < num_reflections; i++){ 
+            if(temp[1].w == 1){
+                reflectivity*=temp[2].w;
+                //blend reflected color and color based on reflecticity
+                temp = ray_march(temp[1].xyz, dir, true);
+                temp_color = temp_color*(1-reflectivity)+(temp[0]*reflectivity);
+
+            }
+        }
     }
        
     color = temp_color;

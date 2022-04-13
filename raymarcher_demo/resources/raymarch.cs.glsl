@@ -258,7 +258,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
             vec4 diffuse = vec4(sphere_text.rgb*kd/3.141, 1);//diffuse lighting
 
-            vec4 indirect_diffuse = (1-metalness)*sphere_text*textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 10);
+            vec4 indirect_diffuse = sphere_text*textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 10);
             //_____________________________________________________________________
 
             vec4 c = (indirect_diffuse+vec4(max(0,dot(normal, direction_to_light)))

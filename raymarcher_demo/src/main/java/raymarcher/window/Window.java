@@ -69,13 +69,6 @@ public class Window {
 		loop();
 	}
 
-	private void createTexture() {
-        texBuff = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, texBuff);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, width, height);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
 	public void init() {
 		glfwInit();
 
@@ -102,10 +95,9 @@ public class Window {
 		shader = new Shader();
 		shader.create();
 
-		createTexture();
 		output = new Texture();
 		vaoID = glGenVertexArrays();
-		skybox = new Texture( new File("./raymarcher_demo/resources/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
+		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
 		normal  = new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_NormalDX.jpg").getAbsolutePath());
 		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
 		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
