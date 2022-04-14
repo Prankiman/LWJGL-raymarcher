@@ -197,7 +197,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
     float metalness;
 
-    normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;//applying normal map
+    normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
 
     if(refl)        
        rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
@@ -230,7 +230,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
             normal = calculate_normal(current_position);
 
-            normal *= texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz;
+            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
 
             fresnel_effect = 1-dot(rd, normal);
 

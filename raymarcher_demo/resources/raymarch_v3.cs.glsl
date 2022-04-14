@@ -26,7 +26,7 @@ uniform vec2 mouse_xy;
 
 uniform vec3 orig;
 
-int num_reflections = 5;
+int num_reflections = 1;
 
 int width = 1600;
 
@@ -87,8 +87,8 @@ vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-30,2));
 
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
-	p.x = (mod((pos.x-p.x),4)-2);
-    return length(p)-rad+displacement;//length(pos-p)-rad+displacement;//
+	//p.x = (mod((pos.x-p.x),4)-2);
+    return length(pos-p)-rad+displacement;//length(p)-rad+displacement;//
 }
 
 float smin(float a, float b, float k) {
@@ -160,13 +160,15 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
+    //normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+
     float metalness;
 
     float offset = 0;
 
     if(refl){      
         rd = (rd-normal*2*dot(rd, normal));//reflecting the direction vector
-        offset = 0.1;
+        offset = 2;
     }
     
     vec3 iSpecFac = vec3(1);
@@ -178,13 +180,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         
         current_position = ro + (total_distance_traveled+offset) * rd;
 
-        metalness =  0.6;
+        metalness =  1;
 
-        rough = 0.7;
+        rough = 0.4;
 
         reflectivity = 1-rough;
-
-        reflectivity = pow(reflectivity, 3);
 
         vec3 albedo = vec3(0.5,0.5,1);
 
@@ -201,10 +201,14 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         {
 
             normal = calculate_normal(current_position);
+            //normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+
             vec3 N = normal;
             vec3 V = -rd;
            
            iSpecFac = fresnel_rough(max(dot(N, V), 0.0), F0, rough);
+        
+            reflectivity*=1-max(dot(V, N), 0);
 
             for(int i = 0; i < 3; i++) 
             {

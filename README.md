@@ -19,3 +19,5 @@ small pixel size:
 wikipedia page on specular lighting: https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model
 
 article on pbr implementation: https://learnopengl.com/PBR/Theory
+
+site about pbr: https://www.pbr-book.org/3ed-2018/contents
