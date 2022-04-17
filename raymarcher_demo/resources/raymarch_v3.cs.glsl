@@ -38,22 +38,22 @@ vec2 cam_rot_xy= 0.2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
 
 vec4 color;
 
-mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  vec3(-sin(cam_rot_xy.x), 0, cos(cam_rot_xy.x)));
-mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
+vec3 pos = vec3(2,0,2);//sphere position
+
+float rad = 1.2;//sphere radius
+
+vec3 cam = vec3(0, 0, -5);
 
 vec3 rotateYP(vec3 v, float yaw, float pitch) {
-    //needs to be in radians
     float yawRads = yaw;
     float pitchRads = pitch;
 
-   vec3 rotateY, rotateX;
-    
-    // Rotate around the Y axis (pitch)
+    vec3 rotateY, rotateX;
+
     rotateY.x = v.x;
     rotateY.y = (v.y*cos(pitchRads) + v.z*sin(pitchRads));
     rotateY.z = (-v.y*sin(pitchRads) + v.z*cos(pitchRads));
-    
-    //Rotate around X axis (yaw)
+
     rotateX.y = rotateY.y;
     rotateX.x = (rotateY.x*cos(yawRads) + rotateY.z*sin(yawRads));
     rotateX.z = (-rotateY.x*sin(yawRads) + rotateY.z*cos(yawRads));
@@ -62,16 +62,8 @@ vec3 rotateYP(vec3 v, float yaw, float pitch) {
     return rotateX;
 }
 
-vec3 pos = vec3(2,0,2);//sphere position
-
-float rad = 1.2;//sphere radius
-
-vec3 cam = vec3(0, 0, -5);
-
-// vec3 orig = vec3(0, 0, -7);
-
-
 ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+
 //normalized pixel coordiantes
 float xu = (float(pixel_coords.x*2 - width)/width/inverse_aspect);
 float yu = 1-(float(pixel_coords.y*2 - height)/height);
@@ -79,11 +71,18 @@ float yu = 1-(float(pixel_coords.y*2 - height)/height);
 
 vec3 comp = vec3(xu, yu, -1);
 
-vec3 dir = normalize(comp-cam)*rotx*roty;
-
 vec3 lightColor[3] = vec3[3](vec3(2500), vec3(2000), vec3(800,700,500));
 
 vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-30,2));
+
+mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  vec3(-sin(cam_rot_xy.x), 0, cos(cam_rot_xy.x)));
+mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
+
+vec3 dir = normalize(comp-cam)*rotx*roty;
+
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
@@ -160,7 +159,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
-    //normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+    normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
 
     float metalness;
 
@@ -168,7 +167,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     if(refl){      
         rd = (rd-normal*2*dot(rd, normal));//reflecting the direction vector
-        offset = 2;
+        offset = 0.5;
     }
     
     vec3 iSpecFac = vec3(1);
@@ -180,15 +179,23 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         
         current_position = ro + (total_distance_traveled+offset) * rd;
 
-        metalness =  1;
+        float ao = 1/(1+0.01*num_steps);//ambient occlusion
 
-        rough = 0.4;
+        vec3 temp_normal = calculate_normal(current_position);
+
+        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;//used to determine specular lighting
+
+        vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
+       
+        rough = texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        
+        // metalness =  1;
+
+        // rough = 0.5;
 
         reflectivity = 1-rough;
 
-        vec3 albedo = vec3(0.5,0.5,1);
-
-        float ao = 1/(1+0.01*num_steps);//ambient occlusion
+        // vec3 albedo = vec3(0.5,0.5,1);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
@@ -200,15 +207,16 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
 
+            // if(abs(dist(current_position)-sphere_dist(current_position)) < abs(dist(current_position)-sphere_dist(current_position-vec3(0,0,4))))
+            //     rough = 0.8;
+            // reflectivity = 1-rough;
             normal = calculate_normal(current_position);
-            //normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
 
             vec3 N = normal;
             vec3 V = -rd;
            
            iSpecFac = fresnel_rough(max(dot(N, V), 0.0), F0, rough);
-        
-            reflectivity*=1-max(dot(V, N), 0);
 
             for(int i = 0; i < 3; i++) 
             {
@@ -256,7 +264,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
             vec4 c = vec4(ambient+Lo, 1);
 
-            return vec4[3] (c, vec4(current_position, 1), vec4(0,0,0, reflectivity));
+            return vec4[3] (c, vec4(current_position, 1), vec4(0,0, rough, reflectivity));
 
         }
 
@@ -276,29 +284,40 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*12);
-    return vec4[3](skycolor, vec4(0), vec4(0,0,0,reflectivity));
+    return vec4[3](skycolor, vec4(0), vec4(0,0,rough,reflectivity));
 }
-
 
 void main() {   
     vec4 temp_color = vec4(0); 
-
+    vec4 tot_color = vec4(0);
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
-        vec4[3] temp = ray_march(orig+cam, dir, false);
-        temp_color = temp[0];
-        float reflectivity = temp[2].w;
-        for (int i = 0; i < num_reflections; i++){ 
-            if(temp[1].w == 1){
-                reflectivity*=temp[2].w;
-                //blend reflected color and color based on reflecticity
-                temp = ray_march(temp[1].xyz, dir, true);
-                temp_color = temp_color*(1-reflectivity)+(temp[0]*reflectivity);
 
+        vec4[3] t = ray_march(orig+cam, dir, false);
+        float gloss = 1-t[2].w;
+        float ref = t[2].w;
+
+        for (int p = 0; p < 3; p++){//the more samples the less noisy glossy reflections will be
+            dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
+            vec4[3] temp = t;
+            temp_color = temp[0];
+            float reflectivity = ref;
+            for (int i = 0; i < num_reflections; i++){ 
+                if(temp[1].w == 1){
+                    reflectivity*=temp[2].w;
+                    vec2 perturb = vec2(rand(vec2(p,10)*dir.yy)*gloss, rand(dir.xx*vec2(-p,10))*gloss);
+                    dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
+                    temp = ray_march(temp[1].xyz, dir, true);
+                    temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
+
+                }
             }
+
+            tot_color += temp_color;
         }
+
     }
        
-    color = temp_color;
+    color = tot_color*0.33;
     imageStore(ftex, pixel_coords, color);
    
 }

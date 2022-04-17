@@ -13,7 +13,7 @@ import java.io.File;
 
 public class ComputeShader {
 	
-	private String computeFile = new File("./raymarcher_demo/resources/raymarch.cs.glsl").getAbsolutePath();
+	private String computeFile = new File("./raymarcher_demo/resources/raymarch_v3.cs.glsl").getAbsolutePath();
 	
 	public int programID, computeID;
 

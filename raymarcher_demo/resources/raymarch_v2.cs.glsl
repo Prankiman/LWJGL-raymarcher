@@ -167,9 +167,9 @@ vec4 ray_march(vec3 ro, vec3 rd)
         
         current_position = ro + (total_distance_traveled) * rd;
 
-        metalness =  0;
+        metalness =  1;
 
-        rough = 0.4;
+        rough = 0.6;
 
         vec3 albedo = vec3(0.5,0.5,1);
 

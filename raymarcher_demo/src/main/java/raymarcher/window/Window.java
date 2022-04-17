@@ -117,7 +117,6 @@ public class Window {
 		uniform4ID = glGetUniformLocation(shader.programID, "tex");
 		uniform5ID = glGetUniformLocation(shader.programID, "res");
 		uniform6ID = glGetUniformLocation(cs.programID, "res");
-		uniform7ID = glGetUniformLocation(cs.programID, "error");
 
 		shader.stop();
 
@@ -213,7 +212,6 @@ public class Window {
 
 			glUniform1f(uniform5ID, res);
 			glUniform1i(uniform4ID, 0);
-			glUniform1i(uniform7ID, 7);
 
 			shader.stop();
 			glfwSwapBuffers(window);

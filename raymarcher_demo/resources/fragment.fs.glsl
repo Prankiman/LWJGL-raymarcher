@@ -47,13 +47,14 @@ void main(){
 
     //swizzle suffixes: xyzw, stpq, rgba
 
-    if(res == 1){
-        for(int i = 0; i < 9; i++)
-            t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
-    }
-    else
-         t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
+    // if(res == 1){
+    //     for(int i = 0; i < 9; i++)
+    //         t += vec3(texture(tex, texCoord.st + offsets[i])) * kernel2[i]*0.0625;
+    // }
+    // else
+    //      t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
 
+    t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
     color =vec4(pow(toneMapped, vec3(1/gamma)),1);
 

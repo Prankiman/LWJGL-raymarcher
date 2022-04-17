@@ -87,10 +87,6 @@ vec3 dir = normalize(comp-cam)*rotx*roty;
 
 vec3 light_position = vec3(-5, -20, 0);
 
-float rand(vec2 co){
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
 	p.x = (mod((pos.x-p.x),4)-2);
