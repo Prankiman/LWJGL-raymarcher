@@ -1,6 +1,8 @@
 # lwjgl_raymarcher_shader
 ray marching in opengl lwjgl using compute shader
 
+![Screenshot 2022-04-18 001830](https://user-images.githubusercontent.com/69918769/163734341-2113faa6-6d1b-42bb-ab23-c93fd3a4275c.png)
+![Screenshot 2022-04-13 010438](https://user-images.githubusercontent.com/69918769/163734366-23c39be0-0bea-4ef8-bd6f-208e6f532c8f.png)
 ![Screenshot 2022-04-11 053219](https://user-images.githubusercontent.com/69918769/162661150-3f81f5ed-d1c3-406f-8680-83dd07061a42.png)
 
 
@@ -19,3 +21,4 @@ wikipedia page on specular lighting: https://en.wikipedia.org/wiki/Specular_high
 article on pbr implementation: https://learnopengl.com/PBR/Theory
 
 site about pbr: https://www.pbr-book.org/3ed-2018/contents
+
