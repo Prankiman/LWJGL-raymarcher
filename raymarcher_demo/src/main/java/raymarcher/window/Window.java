@@ -97,12 +97,12 @@ public class Window {
 
 		output = new Texture();
 		vaoID = glGenVertexArrays();
-		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_NormalGL.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
-		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
+		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/street.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/Fabric/Fabric018_2K_NormalGL.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Fabric/Fabric018_2K_Color.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./raymarcher_demo/resources/Fabric/Fabric018_2K_Displacement.jpg").getAbsolutePath());
 		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
-		roughness =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Roughness.jpg").getAbsolutePath());
+		roughness =  new Texture( new File("./raymarcher_demo/resources/Fabric/Fabric018_2K_Roughness.jpg").getAbsolutePath());
 
 		glBindVertexArray(vaoID);
 

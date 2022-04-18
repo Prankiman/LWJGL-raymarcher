@@ -183,35 +183,27 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;//used to determine specular lighting
+        metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
+        vec3 albedo = vec3(1,0,1)*vec3(texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r);
        
         rough = texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
-        
-        // metalness =  1;
-
-        // rough = 0.5;
 
         reflectivity = 1-rough;
-
-        // vec3 albedo = vec3(0.5,0.5,1);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
 
-        distance_to_closest = dist(current_position);
+        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+
+        distance_to_closest = dist(current_position)-disp*0.08;
 
         vec3 Lo = vec3(0);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
-
-            // if(abs(dist(current_position)-sphere_dist(current_position)) < abs(dist(current_position)-sphere_dist(current_position-vec3(0,0,4))))
-            //     rough = 0.8;
-            // reflectivity = 1-rough;
             normal = calculate_normal(current_position);
-            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
 
             vec3 N = normal;
             vec3 V = -rd;
@@ -264,7 +256,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
             vec4 c = vec4(ambient+Lo, 1);
 
-            return vec4[3] (c, vec4(current_position, 1), vec4(0,0, rough, reflectivity));
+            return vec4[3] (c, vec4(current_position, 1), vec4(0,0,0,rough));
 
         }
 
@@ -284,7 +276,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*12);
-    return vec4[3](skycolor, vec4(0), vec4(0,0,rough,reflectivity));
+    return vec4[3](skycolor, vec4(0), vec4(0,0,0,rough));
 }
 
 void main() {   
@@ -293,18 +285,18 @@ void main() {
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
 
         vec4[3] t = ray_march(orig+cam, dir, false);
-        float gloss = 1-t[2].w;
-        float ref = t[2].w;
+        float rough = t[2].w;
+        float gloss = rough*rough;
 
         for (int p = 0; p < 3; p++){//the more samples the less noisy glossy reflections will be
             dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
             vec4[3] temp = t;
             temp_color = temp[0];
-            float reflectivity = ref;
+            float reflectivity = 1-rough;
             for (int i = 0; i < num_reflections; i++){ 
                 if(temp[1].w == 1){
                     reflectivity*=temp[2].w;
-                    vec2 perturb = vec2(rand(vec2(p,10)*dir.yy)*gloss, rand(dir.xx*vec2(-p,10))*gloss);
+                    vec2 perturb = vec2(rand(vec2(p*2-6,dir.x))*gloss*2, rand(vec2(p*2-6, dir.y))*gloss*2);
                     dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
                     temp = ray_march(temp[1].xyz, dir, true);
                     temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
