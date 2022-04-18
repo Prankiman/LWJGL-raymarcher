@@ -111,7 +111,7 @@ vec3 calculate_normal(vec3 p){
 }
 
 float D_GGX (vec3 N, vec3 H, float roughness){
-    float a2    = roughness * roughness * roughness * roughness;
+    float a2    = roughness * roughness;
     float NdotH = max (dot (N, H), 0.0);
     float d = max((NdotH * NdotH * (a2 - 1.0) + 1.0), 0.0000001);
     return a2 / (PI * d * d);

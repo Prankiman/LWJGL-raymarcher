@@ -112,7 +112,7 @@ vec3 calculate_normal(vec3 p){
 }
 
 float D_GGX (vec3 N, vec3 H, float roughness){
-    float a2    = roughness * roughness * roughness * roughness;
+    float a2    = roughness * roughness;
     float NdotH = max (dot (N, H), 0.0);
     float d = max((NdotH * NdotH * (a2 - 1.0) + 1.0), 0.0000001);
     return a2 / (PI * d * d);
@@ -183,13 +183,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        vec3 albedo = vec3(1,0,1)*vec3(texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r);
+        vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
         rough = texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
-
-        reflectivity = 1-rough;
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
@@ -295,7 +293,6 @@ void main() {
             float reflectivity = 1-rough;
             for (int i = 0; i < num_reflections; i++){ 
                 if(temp[1].w == 1){
-                    reflectivity*=temp[2].w;
                     vec2 perturb = vec2(rand(vec2(p*2-6,dir.x))*gloss*2, rand(vec2(p*2-6, dir.y))*gloss*2);
                     dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
                     temp = ray_march(temp[1].xyz, dir, true);

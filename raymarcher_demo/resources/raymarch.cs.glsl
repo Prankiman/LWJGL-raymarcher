@@ -301,7 +301,6 @@ void main() {
         float reflectivity = temp[2].w;
         for (int i = 0; i < num_reflections; i++){ 
             if(temp[1].w == 1){
-                reflectivity*=temp[2].w;
                 //blend reflected color and color based on reflecticity
                 temp = ray_march(temp[1].xyz, dir, true, i);
                 temp_color = temp_color*(1-reflectivity)+(temp[0]*reflectivity);
