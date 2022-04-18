@@ -183,18 +183,18 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
-        rough = texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        rough = clamp(3*texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
 
         float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        distance_to_closest = dist(current_position)-disp*0.08;
+        distance_to_closest = dist(current_position)-disp*0.16;
 
         vec3 Lo = vec3(0);
 
@@ -273,7 +273,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     if (!refl)
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else
-        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*12);
+        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*14);
     return vec4[3](skycolor, vec4(0), vec4(0,0,0,rough));
 }
 
@@ -286,14 +286,14 @@ void main() {
         float rough = t[2].w;
         float gloss = rough*rough;
 
-        for (int p = 0; p < 3; p++){//the more samples the less noisy glossy reflections will be
+        for (int p = 0; p < 8; p++){//the more samples the less noisy glossy reflections will be
             dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
             vec4[3] temp = t;
             temp_color = temp[0];
             float reflectivity = 1-rough;
             for (int i = 0; i < num_reflections; i++){ 
                 if(temp[1].w == 1){
-                    vec2 perturb = vec2(rand(vec2(p*2-6,dir.x))*gloss*2, rand(vec2(p*2-6, dir.y))*gloss*2);
+                    vec2 perturb = vec2(rand(vec2(p,dir.x))*gloss*2, rand(vec2(p, dir.y))*gloss*2);
                     dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
                     temp = ray_march(temp[1].xyz, dir, true);
                     temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
@@ -306,7 +306,7 @@ void main() {
 
     }
        
-    color = tot_color*0.33;
+    color = tot_color*0.125;
     imageStore(ftex, pixel_coords, color);
    
 }
