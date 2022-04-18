@@ -98,11 +98,11 @@ public class Window {
 		output = new Texture();
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/street.jpg").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_NormalGL.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/rusted/rusted/rustediron2_normal.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/rusted/rusted/rustediron2_basecolor.jpg").getAbsolutePath());
 		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
-		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
-		roughness =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Roughness.jpg").getAbsolutePath());
+		metal =  new Texture( new File("./raymarcher_demo/resources/rusted/rusted/rustediron2_metallic.jpg").getAbsolutePath());
+		roughness =  new Texture( new File("./raymarcher_demo/resources/rusted/rusted/rustediron2_roughness.jpg").getAbsolutePath());
 
 		glBindVertexArray(vaoID);
 

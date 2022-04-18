@@ -62,6 +62,13 @@ vec3 rotateYP(vec3 v, float yaw, float pitch) {
     return rotateX;
 }
 
+mat3 TBN(vec3 normal){
+    vec3 tang = cross(normal, vec3(0,1,0));
+    vec3 binormal = -cross(normal, vec3(1,0,0));
+    
+    return transpose(mat3(tang,binormal, normal));
+}
+
 vec3 pos = vec3(2,0,2);//sphere position
 
 float rad = 1.2;//sphere radius
@@ -193,7 +200,8 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
 
     float metalness;
 
-    normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+    normal = TBN(normal)*2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+    normal = normalize(normal);
 
     if(refl)        
        rd = rd-normal*2*dot(rd, normal);//reflecting the direction vector
@@ -214,7 +222,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         float smoothness = max(0,1-rough);
         smoothness*=smoothness;
 
-        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        float disp = 0;//texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         float fresnel_effect = 1-dot(rd, normal);//the surface should be more reflective if the viewing vector is perpendicular to the surfice normal and vice versa
         
@@ -226,8 +234,9 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl, float off)
         {
             normal = calculate_normal(current_position);
 
-            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
-
+            normal = TBN(normal)*2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+            normal = normalize(normal);
+            
             fresnel_effect = 1-dot(rd, normal);
 
             reflectivity = min(max(fresnel_effect*smoothness, 0),1);

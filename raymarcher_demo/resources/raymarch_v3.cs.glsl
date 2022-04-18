@@ -84,6 +84,13 @@ float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
+mat3 TBN(vec3 normal){
+    vec3 tang = cross(normal, vec3(0,1,0));
+    vec3 binormal = -cross(normal, vec3(1,0,0));
+    
+    return transpose(mat3(tang,binormal, normal));
+}
+
 float sphere_dist(vec3 p){//distance function for spheres
 	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
 	//p.x = (mod((pos.x-p.x),4)-2);
@@ -159,7 +166,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
-    normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;//applying normal map
+    mat3 tbn = TBN(normal);
+
+    normal = tbn*2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
+
+    normal = normalize(normal);
 
     float metalness;
 
@@ -183,16 +194,16 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
-        rough = clamp(3*texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x, 0.0f, 1.0f);
+        rough = clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
 
-        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        float disp = 0;//texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         distance_to_closest = dist(current_position)-disp*0.16;
 
@@ -201,7 +212,12 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
         {
             normal = calculate_normal(current_position);
-            normal *= 2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
+
+            tbn = TBN(normal);
+            
+            normal = tbn*2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1;
+
+            normal = normalize(normal);
 
             vec3 N = normal;
             vec3 V = -rd;
@@ -286,7 +302,7 @@ void main() {
         float rough = t[2].w;
         float gloss = rough*rough;
 
-        for (int p = 0; p < 8; p++){//the more samples the less noisy glossy reflections will be
+        for (int p = 0; p < 1; p++){//the more samples the less noisy glossy reflections will be
             dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
             vec4[3] temp = t;
             temp_color = temp[0];
@@ -306,7 +322,7 @@ void main() {
 
     }
        
-    color = tot_color*0.125;
+    color = tot_color;//take the avrage from the samples
     imageStore(ftex, pixel_coords, color);
    
 }
