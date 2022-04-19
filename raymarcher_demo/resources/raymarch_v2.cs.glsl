@@ -39,27 +39,6 @@ vec4 color;
 mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  vec3(-sin(cam_rot_xy.x), 0, cos(cam_rot_xy.x)));
 mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
 
-vec3 rotateYP(vec3 v, float yaw, float pitch) {
-    //needs to be in radians
-    float yawRads = yaw;
-    float pitchRads = pitch;
-
-   vec3 rotateY, rotateX;
-    
-    // Rotate around the Y axis (pitch)
-    rotateY.x = v.x;
-    rotateY.y = (v.y*cos(pitchRads) + v.z*sin(pitchRads));
-    rotateY.z = (-v.y*sin(pitchRads) + v.z*cos(pitchRads));
-    
-    //Rotate around X axis (yaw)
-    rotateX.y = rotateY.y;
-    rotateX.x = (rotateY.x*cos(yawRads) + rotateY.z*sin(yawRads));
-    rotateX.z = (-rotateY.x*sin(yawRads) + rotateY.z*cos(yawRads));
-
-    
-    return rotateX;
-}
-
 vec3 pos = vec3(2,0,2);//sphere position
 
 float rad = 2;//sphere radius
