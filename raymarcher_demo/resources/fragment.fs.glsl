@@ -54,8 +54,8 @@ void main(){
     // else
     //      t = vec3(texture(tex, offsets[2]+off*offsets[2]));//sets the pixel color to that of the nearest calculated pixel
 
-    // t = vec3(texture(tex, offsets[2]+off*offsets[2]));
-    t = vec3(texture(tex, texCoord.st));
+    t = vec3(texture(tex, offsets[2]+off*offsets[2]));
+    
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
     color =vec4(pow(toneMapped, vec3(1/gamma)),1);
 
