@@ -32,6 +32,8 @@ int width = 1600;
 
 int height = 1000;
 
+int samples = 1;
+
 float inverse_aspect = 0.625;
 
 vec2 cam_rot_xy= 0.2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
@@ -66,11 +68,11 @@ float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
+//incorrect tbn matrix
 mat3 TBN(vec3 normal){
-
-    vec3 tang = normalize(cross(normal, vec3(0,1,0)));
-
-    vec3 bitan = normalize(cross(normal, tang));
+    vec3 tang = cross(normal, vec3(0,0.1,0));
+               
+    vec3 bitan = cross(normal, tang);
 
     return mat3(tang,bitan, normal);
 }
@@ -91,13 +93,11 @@ float dist(vec3 pos){
 }
 
 vec3 calculate_normal(vec3 p){
-	vec3 smallx = vec3(0.0001, 0.0, 0.0);
-	vec3 smally = vec3(0.0, 0.0001, 0.0);
-	vec3 smallz = vec3(0.0, 0.0, 0.0001);
+	vec3 smallstep = vec3(0.0001, 0.0, 0.0);
 
-	float gx = dist(p+smallx)-dist(p-smallx);
-	float gy = dist(p+smally)-dist(p-smally);
-	float gz = dist(p+smallz)-dist(p-smallz);
+	float gx = dist(p+smallstep)-dist(p);
+	float gy = dist(p+smallstep.yxy)-dist(p);
+	float gz = dist(p+smallstep.yyx)-dist(p);
 
 	return normalize(vec3(gx,gy,gz));
 }
@@ -138,7 +138,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     float MAXIMUM_TRACE_DISTANCE = 40;
     int num_steps = 0;
 
-    float rough;
+    
 
     vec3 kD;//used to determine how much specular light should be present
 
@@ -150,12 +150,13 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
-    //my TBN matrix is incorrect (but yet the normal mapping works), the texture normal should be multiplied by 2 and then subtracted by one to get into the range of -1, 1 if the TBN matrix is correct
-    normal = normalize(TBN(normal)*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
+    float rough  = clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
+
+    normal = normalize(TBN(normal)*(2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1));
 
     float metalness;
 
-    float offset = 0;
+    float offset = 0.1;
 
     if(refl){      
         rd = (rd-normal*2*dot(rd, normal));//reflecting the direction vector
@@ -163,6 +164,8 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     }
     
     vec3 iSpecFac = vec3(1);
+
+    vec4 skycolor;
 
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {
@@ -173,11 +176,11 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = 0.5;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
-        rough = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;//clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
+        float rough = clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
@@ -192,7 +195,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         {
             normal = calculate_normal(current_position);
 
-            normal = normalize(TBN(normal)*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
+            normal = normalize(TBN(normal)*(2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1));
 
             vec3 N = normal;
             vec3 V = -rd;
@@ -259,8 +262,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         }
     }
     //return skycolor
-    
-    vec4 skycolor;
+
     if (!refl)
         skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
     else
@@ -277,15 +279,15 @@ void main() {
         float rough = t[2].w;
         float gloss = rough*rough;
 
-        for (int p = 0; p < 20; p++){//the more samples the less noisy glossy reflections will be
+        for (int p = 0; p < samples; p++){//the more samples the less noisy glossy reflections will be
             dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
             vec4[3] temp = t;
             temp_color = temp[0];
             float reflectivity = 1-rough;
             for (int i = 0; i < num_reflections; i++){ 
                 if(temp[1].w == 1){
-                    vec2 perturb = vec2(rand(vec2(p,dir.x))*gloss*2, rand(vec2(p, dir.y))*gloss*2);
-                    dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
+                    // vec2 perturb = vec2(rand(vec2(p,dir.x))*gloss*2, rand(vec2(p, dir.y))*gloss*2);
+                    //dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
                     temp = ray_march(temp[1].xyz, dir, true);
                     temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
 
@@ -297,7 +299,7 @@ void main() {
 
     }
        
-    color = tot_color*0.05;//take the avrage from the samples
+    color = tot_color/samples;
     imageStore(ftex, pixel_coords, color);
    
 }
