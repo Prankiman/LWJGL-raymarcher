@@ -68,7 +68,7 @@ float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-//incorrect tbn matrix
+//incorrect tangent and bitangent calculations but approximative
 mat3 TBN(vec3 normal){
     vec3 tang = cross(normal, vec3(0,0.1,0));
                
