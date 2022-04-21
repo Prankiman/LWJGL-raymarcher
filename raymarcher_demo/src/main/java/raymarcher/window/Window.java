@@ -16,8 +16,6 @@ public class Window {
 
 	private static Window instance = null;
 
-	public static int framebufferImageBinding;
-
 	private int width = 1600;
 	private int height = 1000;
 
@@ -25,7 +23,7 @@ public class Window {
 
     public static int tex_output_temp;
 
-	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID, uniform5ID, uniform6ID, uniform7ID;
+	private int vaoID, uniformID, uniform2ID, uniform3ID, uniform4ID, uniform5ID;
 	public static float xx = 0;
 
 	public static float camx = 0, camy = 0, camz = 0;
@@ -86,9 +84,6 @@ public class Window {
 		glfwSetCursorPosCallback(window, cursor);
 		glfwSetKeyCallback(window, keyboard = new KeyInput());
 
-
-
-
 		cs = new ComputeShader();
 		cs.create();
 		cs.init();
@@ -98,9 +93,9 @@ public class Window {
 		output = new Texture();
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/earth/earth_norm.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/earth/earth.jpg").getAbsolutePath());
-		displace =  new Texture( new File("./raymarcher_demo/resources/earth/disp.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/test_normal.png").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
 		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
 		roughness =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Roughness.jpg").getAbsolutePath());
 
@@ -114,19 +109,14 @@ public class Window {
 		uniform2ID = glGetUniformLocation(cs.programID, "xx");
 		uniformID = glGetUniformLocation(cs.programID, "mouse_xy");
 		uniform3ID = glGetUniformLocation(cs.programID, "orig");
-		uniform4ID = glGetUniformLocation(shader.programID, "tex");
-		uniform5ID = glGetUniformLocation(shader.programID, "res");
-		uniform6ID = glGetUniformLocation(cs.programID, "res");
+		uniform4ID = glGetUniformLocation(shader.programID, "res");
+		uniform5ID = glGetUniformLocation(cs.programID, "res");
 
 		shader.stop();
 
-
-
-
-
 		glfwShowWindow(window);
 	}
-	double crntTime = 0, timeDiff, counter, prevTime = 0;
+	double crntTime = 0, deltaTime, counter, prevTime = 0;
 
 	public void loop() {
 
@@ -134,27 +124,23 @@ public class Window {
 
 			// Updates counter and times
 		crntTime = glfwGetTime();
-		timeDiff = crntTime - prevTime;
+		deltaTime = crntTime - prevTime;
 		counter++;
 
-		if (timeDiff >= 1.0 / 30.0)
+		if (deltaTime >= 1.0 / 30.0)
 		{
 			// Creates new title
-			int FPS = (int)((1.0 / timeDiff) * counter);
-			int  ms = (int)((timeDiff / counter) * 1000);
+			int FPS = (int)((1.0 / deltaTime) * counter);
+			int  ms = (int)((deltaTime / counter) * 1000);
 			String newTitle = "Use P to increase resolution and O to decrease resolution- " + FPS + "FPS / " + ms + "ms";
 			glfwSetWindowTitle(window, newTitle);
 
 			// Resets times and counter
 			prevTime = crntTime;
 			counter = 0;
-
-			// Use this if you have disabled VSync
-			//camera.Inputs(window);
 		}
 
 			glfwPollEvents();
-			//glViewport(0, 0, width, height);
 
 			xx += speed;
 			if (xx > 0 || xx < -4)
@@ -164,7 +150,7 @@ public class Window {
 			glUniform1f(uniform2ID, xx);
 			glUniform2f(uniformID, dx*2, dy*2);
 			glUniform3f(uniform3ID, cam.x, cam.y, cam.z);
-			glUniform1f(uniform6ID, res);
+			glUniform1f(uniform5ID, res);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, output.texID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
@@ -202,16 +188,14 @@ public class Window {
 			glBindTextureUnit(6, roughness.texID);
 
 			cs.disp();
-			// glBindImageTexture(0, 0, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
-			// glBindImageTexture(1, 0, 0, false, 0, GL_READ_ONLY, GL_RGBA32F);
+
 			cs.stop();
 
 			glClear(GL_COLOR_BUFFER_BIT);
 			shader.use();
 			Render.render(vaoID, model);
 
-			glUniform1f(uniform5ID, res);
-			glUniform1i(uniform4ID, 0);
+			glUniform1f(uniform4ID, res);
 
 			shader.stop();
 			glfwSwapBuffers(window);

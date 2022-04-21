@@ -68,7 +68,7 @@ float rand(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-//incorrect tangent and bitangent calculations but approximative
+//incorrect tangent and bitangent
 mat3 TBN(vec3 normal){
     vec3 tang = cross(normal, vec3(0,0.1,0));
                
@@ -150,7 +150,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
-    float rough  = clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
+    float rough = clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
     normal = normalize(TBN(normal)*(2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1));
 
@@ -271,6 +271,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 }
 
 void main() {   
+        
     vec4 temp_color = vec4(0); 
     vec4 tot_color = vec4(0);
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
@@ -300,6 +301,7 @@ void main() {
     }
        
     color = tot_color/samples;
+
     imageStore(ftex, pixel_coords, color);
    
 }

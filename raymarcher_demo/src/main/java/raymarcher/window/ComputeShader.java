@@ -5,9 +5,6 @@ import static org.lwjgl.opengl.GL45.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.IntBuffer;
-
-import org.lwjgl.BufferUtils;
 
 import java.io.File;
 
@@ -69,10 +66,6 @@ public class ComputeShader {
 	public void init(){
 		glUseProgram(programID);
 		
-		IntBuffer params = BufferUtils.createIntBuffer(1);
-        // int loc = glGetUniformLocation(programID, "ftex");
-        //glGetUniformiv(programID, loc, params);//used for debugging
-        Window.framebufferImageBinding = params.get(0);
 		glUseProgram(0);
 	}
 

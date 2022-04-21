@@ -15,3 +15,7 @@ article on pbr implementation: https://learnopengl.com/PBR/Theory
 
 site about pbr: https://www.pbr-book.org/3ed-2018/contents
 
+normal mapping: https://www.geeks3d.com/20130122/normal-mapping-without-precomputed-tangent-space-vectors/, https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+
+ordered_dithering: https://en.wikipedia.org/wiki/Ordered_dithering
+
