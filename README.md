@@ -15,5 +15,5 @@ article on pbr implementation: https://learnopengl.com/PBR/Theory
 
 site about pbr: https://www.pbr-book.org/3ed-2018/contents
 
-
+normal mapping: https://learnopengl.com/Advanced-Lighting/Normal-Mapping
 

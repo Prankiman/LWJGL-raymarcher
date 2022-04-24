@@ -67,7 +67,7 @@ float yu = float(1-(float(pixel_coords.y*2 - height)*inv_height));
 
 vec3 comp = vec3(xu, yu, -1);
 
-vec3 lightColor[3] = vec3[3](vec3(1500), vec3(1000), vec3(80,70,500));
+vec3 lightColor[3] = vec3[3](vec3(1500), vec3(1000), vec3(800,250,50));
 
 vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-3,2));
 
@@ -86,13 +86,19 @@ float sphere_dist(vec3 p){//distance function for spheres
     return float(length(pos-p)-rad+displacement);//length(p)-rad+displacement;//
 }
 
+
 float smin(float a, float b, float k) {
   float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
   return mix(a, b, h) - k*h*(1.0-h);
 }
 
+float smax(float a, float b, float k) {
+  float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+  return mix(a, b, -h) - k*h*(1.0-h);
+}
+
 float dist(vec3 pos){
-    return float(smin(sphere_dist(pos), sphere_dist(pos-vec3(0.0,0.0,xx)), 2.0));//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
+    return smin(sphere_dist(pos), sphere_dist(pos-vec3(0.0,0.0,xx)), 2.0);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
@@ -105,16 +111,14 @@ vec3 calculate_normal(vec3 p){
 	return normalize(vec3(gx,gy,gz));
 }
 
-mat3 TBN(vec3 n){
+mat3 TBN(vec3 n, vec3 px, vec3 py, vec3 pos ){
 
     //TBN: [tangent, bitangent, normal]
 
-    // vec3 t = calculate_tangent();
+    vec3 t = normalize(px-pos);
+    vec3 b = normalize(py-pos);
 
-    // vec3 b = cross(n, t);
-    //  return mat3(normalize(t), normalize(b),n);
-
-    return mat3(vec3(1), vec3(1),n);
+    return mat3(t, b, n);
 }
 
 float D_GGX (vec3 N, vec3 H, float roughness){
@@ -145,6 +149,15 @@ vec3 fresnel_rough(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0)  * pow(1.0 - cosTheta, 5.0);
 }
 
+//aproximate nearby intersection points for tangent and bitangent calculations
+vec3[2] offsets(vec3 rdx, vec3 rdy, float t, vec3 ro )
+{
+    vec3 px = t*rdx+ro;
+    vec3 py = t*rdy+ro;
+    
+    return vec3[2](px, py); 
+}
+
 vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 {
     //off is used so that the reflection direction doesn't intersect the object it bounced off from;
@@ -152,8 +165,6 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     float MINIMUM_HIT_DISTANCE = 0.001;
     float MAXIMUM_TRACE_DISTANCE = 40.0;
     int num_steps = 0;
-
-    
 
     vec3 kD;//used to determine how much specular light should be present
 
@@ -163,23 +174,37 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     
     float distance_to_closest;
 
-    vec3 normal = calculate_normal(ro);
+    vec3 normal;
+    vec3 tan_normal;
 
-    float rough = 0.5;//clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
-    
-    vec3 tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
+    float offset = 0;
 
-    normal = normalize(TBN(normal)*tan_normal-1);
+    float rough;
+
+    vec3 rdx = vec3(normalize(vec3(xu+1*inv_width,yu-1*inv_height, -1)-cam)*rotx*roty);
+    vec3 rdy = vec3(normalize(vec3(xu-1*inv_width,yu+1*inv_height, -1)-cam)*rotx*roty);
+
+    vec3[2] offsetss = offsets(rdx, rdy, 0.01, ro);	
+
+    if(refl){
+        normal = calculate_normal(ro);
+
+        rough = clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
+
+        tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz)-1;
+
+        normal = normalize(TBN(normal,offsetss[0],offsetss[1], ro)*tan_normal);
+
+        rd = (rd-normal*2.0*dot(rd, normal));//reflecting the direction vector
+
+        rdx = (rdx-normal*2.0*dot(rdx, normal));
+        rdy = (rdy-normal*2.0*dot(rdy, normal));
+        
+        offset = 0.1;
+    }
 
     float metalness;
 
-    float offset = 0.1;
-
-    if(refl){      
-        rd = (rd-normal*2.0*dot(rd, normal));//reflecting the direction vector
-        offset = 0.5;
-    }
-    
     vec3 iSpecFac = vec3(1);
 
     vec4 skycolor;
@@ -193,29 +218,31 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = 1;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        vec3 albedo = vec3(0.8,1,0.2);//texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
+        vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
-        float rough = 0.5;//clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
+        float rough = clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
 
-        float disp = 0;//texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         distance_to_closest = dist(current_position)-disp*0.08;
 
         vec3 Lo = vec3(0);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
-        {   
+        {      
 
             normal = calculate_normal(current_position);
 
-            tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
+            vec3[2] offsets = offsets(rdx, rdy, total_distance_traveled, ro);	
 
-            normal = normalize(TBN(normal)*tan_normal-1);;
+            tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz)-1;
+
+            normal = normalize(TBN(normal, offsets[0], offsets[1], current_position)*(tan_normal));
 
             vec3 N = normal;
             vec3 V = -rd;

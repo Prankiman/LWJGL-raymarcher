@@ -92,8 +92,9 @@ public class Window {
 
 		output = new Texture();
 		vaoID = glGenVertexArrays();
+		//images must use 3+ color channels as grayscale image usage has not been implemented yet
 		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/test_normal.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_NormalGL.jpg").getAbsolutePath());
 		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
 		displace =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
 		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
