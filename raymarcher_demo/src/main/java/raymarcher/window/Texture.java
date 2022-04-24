@@ -40,7 +40,7 @@ public class Texture {
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
         FloatBuffer image = stbi_loadf(filepath, width, height, channels, 0);
-        glTextureStorage2D(texID, 1, GL_RGBA, 1600, 1200);
+        glTextureStorage2D(texID, 1, GL_RGBA, 1600, 1000);
         // glBindImageTexture(1, texID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA);
         if (image != null) {
             if (channels.get(0) == 4) {

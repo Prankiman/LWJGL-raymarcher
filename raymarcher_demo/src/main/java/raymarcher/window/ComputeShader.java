@@ -73,7 +73,7 @@ public class ComputeShader {
 		glUseProgram(programID);
 	}
 	public void disp() {
-		glDispatchCompute((int)Math.ceil(1600/8), (int)Math.ceil(1200/4), 1);
+		glDispatchCompute((int)Math.ceil(1600/8), (int)Math.ceil(1000/4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	}
 	

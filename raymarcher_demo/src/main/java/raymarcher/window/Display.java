@@ -9,20 +9,20 @@ import static org.lwjgl.opengl.GL45.*;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-public class Model {
+public class Display {
 	
 	private float[] vertexArray;
 	private int[] indices;
 	
 	private int vboID, iboID;
 	
-	public Model(Vector3f position, Vector2f scale, Vector3f color) {
+	public Display() {
 		vertexArray = new float[] {
-				-1, -1, position.z, 0.0f, 0.0f,// color.x, 1, color.z, 1.0f,
-				-1, 1, position.z,  0.0f, 1.0f,//1, color.y, color.z, 1.0f,
-				1, -1, position.z,  1.0f, 0.0f,//color.x, color.y, 1, 1.0f,
+				-1, -1, 0, 0.0f, 0.0f,
+				-1, 1, 0,  0.0f, 1.0f,
+				1, -1, 0,  1.0f, 0.0f,
 
-				1, 1, position.z,  	1.0f, 1.0f,//color.x, 1, 1, 1.0f,
+				1, 1, 0,  	1.0f, 1.0f,
 		};
 		
 		indices = new int[] {
@@ -59,8 +59,6 @@ public class Model {
 	public void setPointers() {
 		glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, false, 5*Float.BYTES, 3*Float.BYTES);
-		// glVertexAttribPointer(0, 3, GL_FLOAT, false, 7 * Float.BYTES, 0);
-		// glVertexAttribPointer(1, 4, GL_FLOAT, false, 7 * Float.BYTES, 0);
 	}
 	
 	public int getVboID() {

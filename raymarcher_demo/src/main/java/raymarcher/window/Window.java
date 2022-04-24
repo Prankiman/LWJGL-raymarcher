@@ -33,7 +33,7 @@ public class Window {
 
 	float speed = 0.002f;
 
-	private Model model;
+	private Display display;
 	private Shader shader;
 	private ComputeShader cs;
 	public static int texBuff, tex_out, sampler;
@@ -93,16 +93,16 @@ public class Window {
 		output = new Texture();
 		vaoID = glGenVertexArrays();
 		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/test_normal.png").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Color.jpg").getAbsolutePath());
-		displace =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Displacement.jpg").getAbsolutePath());
+		normal  = new Texture( new File("./raymarcher_demo/resources/test_normal.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
 		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
-		roughness =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Roughness.jpg").getAbsolutePath());
+		roughness =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Roughness.jpg").getAbsolutePath());
 
 		glBindVertexArray(vaoID);
 
-		model = new Model(new Vector3f(0, 0, 0), new Vector2f(1, 1), new Vector3f(0, 0, 0));
-		model.create();
+		display = new Display();
+		display.create();
 
 
 		shader.use();
@@ -193,7 +193,7 @@ public class Window {
 
 			glClear(GL_COLOR_BUFFER_BIT);
 			shader.use();
-			Render.render(vaoID, model);
+			Render.render(vaoID, display);
 
 			glUniform1f(uniform4ID, res);
 
@@ -203,7 +203,7 @@ public class Window {
 		}
 
 		glDeleteVertexArrays(vaoID);
-		model.delete();
+		display.delete();
 		// cs.delete();
 		shader.delete();
 		// tex.unbind();

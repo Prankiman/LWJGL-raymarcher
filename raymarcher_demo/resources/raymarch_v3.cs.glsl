@@ -1,10 +1,8 @@
 #version 450 core
+#extension GL_NV_gpu_shader5 : enable
+#extension GL_NV_compute_shader_derivatives : enable
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
-
-precision lowp float;
-precision lowp int;
-precision lowp sampler2D;
 
 layout (rgba32f, binding = 0)  writeonly uniform image2D ftex;
 layout (binding = 1)  uniform sampler2D skybox;
@@ -14,7 +12,9 @@ layout (binding = 4) uniform sampler2D displace;
 layout (binding = 5) uniform sampler2D metal;
 layout (binding = 6) uniform sampler2D roughness;
 
-const float PI = 3.14159265358979f;
+shared vec4[32] color_errors;
+
+const float PI = 3.1415926535;
 
 uniform float xx;
 
@@ -30,13 +30,23 @@ int num_reflections = 1;
 
 int width = 1600;
 
+float inv_width = 0.000625;
+
+uint globalInvocationIndex = gl_GlobalInvocationID.x+gl_GlobalInvocationID.y*width;
+
 int height = 1000;
+
+float inv_height = 0.001;
 
 int samples = 1;
 
+float inv_samples = 1.0;
+
 float inverse_aspect = 0.625;
 
-vec2 cam_rot_xy= 0.2*vec2(((mouse_xy.x+90)/400-1), 2*((mouse_xy.y)/300-1));
+float aspect = 1.6;
+
+vec2 cam_rot_xy= vec2(0.2*vec2(((mouse_xy.x+90.0)*0.0025-1.0), 2.0*((mouse_xy.y)*0.00333-1.0)));
 
 vec4 color;
 
@@ -49,38 +59,31 @@ vec3 cam = vec3(0, 0, -5);
 ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
 //normalized pixel coordiantes
-float xu = (float(pixel_coords.x*2 - width)/width/inverse_aspect);
-float yu = 1-(float(pixel_coords.y*2 - height)/height);
+float xu = float(float(pixel_coords.x*2 - width)*inv_width*aspect);
+float yu = float(1-(float(pixel_coords.y*2 - height)*inv_height));
+// float xu = float(float(pixel_coords.x*2 - width)/width/inverse_aspect);
+// float yu = float(1-(float(pixel_coords.y*2 - height)/height));
 
 
 vec3 comp = vec3(xu, yu, -1);
 
-vec3 lightColor[3] = vec3[3](vec3(2500), vec3(2000), vec3(800,700,500));
+vec3 lightColor[3] = vec3[3](vec3(1500), vec3(1000), vec3(80,70,500));
 
-vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-30,2));
+vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-3,2));
 
 mat3 roty = mat3(vec3(cos(cam_rot_xy.x), 0, sin(cam_rot_xy.x)), vec3(0, 1, 0),  vec3(-sin(cam_rot_xy.x), 0, cos(cam_rot_xy.x)));
 mat3 rotx = mat3(vec3(1, 0, 0), vec3(0, cos(-cam_rot_xy.y), -sin(-cam_rot_xy.y)),  vec3( 0, sin(-cam_rot_xy.y), cos(-cam_rot_xy.y)));
 
-vec3 dir = normalize(comp-cam)*rotx*roty;
+vec3 dir = vec3(normalize(comp-cam)*rotx*roty);
 
 float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-}
-
-//incorrect tangent and bitangent
-mat3 TBN(vec3 normal){
-    vec3 tang = cross(normal, vec3(0,0.1,0));
-               
-    vec3 bitan = cross(normal, tang);
-
-    return mat3(tang,bitan, normal);
+    return float(fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453));
 }
 
 float sphere_dist(vec3 p){//distance function for spheres
-	float displacement = 0;//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
+	float displacement = float(0.0);//sin((3) * p.x) * sin((3) * p.y) * sin((3) * p.z) * 0.15;
 	//p.x = (mod((pos.x-p.x),4)-2);
-    return length(pos-p)-rad+displacement;//length(p)-rad+displacement;//
+    return float(length(pos-p)-rad+displacement);//length(p)-rad+displacement;//
 }
 
 float smin(float a, float b, float k) {
@@ -89,17 +92,29 @@ float smin(float a, float b, float k) {
 }
 
 float dist(vec3 pos){
-    return smin(sphere_dist(pos), sphere_dist(pos-vec3(0,0,xx)), 2);//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
+    return float(smin(sphere_dist(pos), sphere_dist(pos-vec3(0.0,0.0,xx)), 2.0));//smin(rect_dist(pos), sphere_dist(pos), 2);//fractalSDF(pos);//
 }
 
 vec3 calculate_normal(vec3 p){
 	vec3 smallstep = vec3(0.0001, 0.0, 0.0);
 
-	float gx = dist(p+smallstep)-dist(p);
-	float gy = dist(p+smallstep.yxy)-dist(p);
-	float gz = dist(p+smallstep.yyx)-dist(p);
+	float gx = dist(p+smallstep)-dist(p-smallstep);
+	float gy = dist(p+smallstep.yxy)-dist(p-smallstep.yxy);
+	float gz = dist(p+smallstep.yyx)-dist(p-smallstep.yyx);
 
 	return normalize(vec3(gx,gy,gz));
+}
+
+mat3 TBN(vec3 n){
+
+    //TBN: [tangent, bitangent, normal]
+
+    // vec3 t = calculate_tangent();
+
+    // vec3 b = cross(n, t);
+    //  return mat3(normalize(t), normalize(b),n);
+
+    return mat3(vec3(1), vec3(1),n);
 }
 
 float D_GGX (vec3 N, vec3 H, float roughness){
@@ -110,7 +125,7 @@ float D_GGX (vec3 N, vec3 H, float roughness){
 }
 
 float G_GGX (float NdotV, float roughness){
-    float k = roughness/2;
+    float k = roughness*0.5;
     return NdotV / max((NdotV * (1.0 - k) + k), 0.0000000000001);
 }
 
@@ -133,9 +148,9 @@ vec3 fresnel_rough(float cosTheta, vec3 F0, float roughness)
 vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 {
     //off is used so that the reflection direction doesn't intersect the object it bounced off from;
-    float total_distance_traveled = 0;
+    float total_distance_traveled = 0.0;
     float MINIMUM_HIT_DISTANCE = 0.001;
-    float MAXIMUM_TRACE_DISTANCE = 40;
+    float MAXIMUM_TRACE_DISTANCE = 40.0;
     int num_steps = 0;
 
     
@@ -150,16 +165,18 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     vec3 normal = calculate_normal(ro);
 
-    float rough = clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
+    float rough = 0.5;//clamp(texture(roughness, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).r*3, 0.0f, 1.0f);
+    
+    vec3 tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
 
-    normal = normalize(TBN(normal)*(2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1));
+    normal = normalize(TBN(normal)*tan_normal-1);
 
     float metalness;
 
     float offset = 0.1;
 
     if(refl){      
-        rd = (rd-normal*2*dot(rd, normal));//reflecting the direction vector
+        rd = (rd-normal*2.0*dot(rd, normal));//reflecting the direction vector
         offset = 0.5;
     }
     
@@ -176,26 +193,29 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 temp_normal = calculate_normal(current_position);
 
-        metalness = texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        metalness = 1;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
-        vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
+        vec3 albedo = vec3(0.8,1,0.2);//texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
        
-        float rough = clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
+        float rough = 0.5;//clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, albedo.rgb, metalness);
 
-        float disp = texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
+        float disp = 0;//texture(displace, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         distance_to_closest = dist(current_position)-disp*0.08;
 
         vec3 Lo = vec3(0);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
-        {
+        {   
+
             normal = calculate_normal(current_position);
 
-            normal = normalize(TBN(normal)*(2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz-1));
+            tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz);
+
+            normal = normalize(TBN(normal)*tan_normal-1);;
 
             vec3 N = normal;
             vec3 V = -rd;
@@ -227,7 +247,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
                 //_________________DIFFUSE LIGTHING___________________________
                 //direct diffuse ligthing
 
-                kD = 1 - kS;
+                kD = 1.0 - kS;
                 kD *= vec3(1) - metalness;
 
                 float NdotL = max(dot(N, L), 0.0);                
@@ -236,7 +256,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
             }
 
             //indirect diffuse ligthing____________
-            vec3 indirectDiffuse = textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 12).rgb;
+            vec3 indirectDiffuse = vec3(textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 12.0).rgb);
 
             vec3 idIntensity = (vec3(1) - iSpecFac); 
 
@@ -264,9 +284,9 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     //return skycolor
 
     if (!refl)
-        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1);
+        skycolor = vec4(textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), 1.0));
     else
-        skycolor = textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*14);
+        skycolor = vec4(textureLod(skybox, vec2(0.5+atan(rd.x, rd.z)*0.16, 0.5+asin(-rd.y)*0.32), rough*14.0));
     return vec4[3](skycolor, vec4(0), vec4(0,0,0,rough));
 }
 
@@ -281,16 +301,16 @@ void main() {
         float gloss = rough*rough;
 
         for (int p = 0; p < samples; p++){//the more samples the less noisy glossy reflections will be
-            dir = normalize(vec3(xu, yu, -1)-cam)*rotx*roty;
+            dir = vec3(normalize(vec3(xu, yu, -1)-cam)*rotx*roty);
             vec4[3] temp = t;
             temp_color = temp[0];
-            float reflectivity = 1-rough;
+            float reflectivity = 1.0-rough;
             for (int i = 0; i < num_reflections; i++){ 
-                if(temp[1].w == 1){
+                if(temp[1].w == 1.0){
                     // vec2 perturb = vec2(rand(vec2(p,dir.x))*gloss*2, rand(vec2(p, dir.y))*gloss*2);
                     //dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
                     temp = ray_march(temp[1].xyz, dir, true);
-                    temp_color = temp_color*(1-reflectivity)+temp[0]*reflectivity;
+                    temp_color = temp_color*(1.0-reflectivity)+temp[0]*reflectivity;
 
                 }
             }
@@ -300,9 +320,11 @@ void main() {
 
     }
        
-    color = tot_color/samples;
+    color = tot_color*inv_samples;//tot_color/samples;
 
-    imageStore(ftex, pixel_coords, color);
+    imageStore(ftex, pixel_coords, clamp(color, 0f, 1.5f));
+
+   
    
 }
 

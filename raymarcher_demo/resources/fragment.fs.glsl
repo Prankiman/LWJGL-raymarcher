@@ -37,28 +37,10 @@ float kernel2[9] = float[]
    1, 2, 1
 );
 
-// float[4][4] dithering = float[][]
-// (
-//     float[](0, 8, 2, 10),
-//     float[](12, 4, 14, 6),
-//     float[](3, 11, 1, 9),
-//     float[](15, 7, 13, 5)
-// );
-float dithering[8][8] = float[][](
-    float[](0, 32, 8, 40, 2, 34, 10, 42),
-    float[](48, 16, 56, 24, 50, 18, 58, 26),
-    float[](12, 44, 4, 36, 14, 46, 6, 38),
-    float[](60, 28, 52, 20, 62, 30, 54, 22),
-    float[](3, 35, 11, 43, 1, 33, 9, 41),
-    float[](51, 19, 59, 27, 49, 17, 57, 25),
-    float[](15, 47, 7, 39, 13, 45, 5, 37),
-    float[](63, 31, 55, 23, 61, 29, 53, 21)
-);
-
 void main(){
 
     float exposure = 1;
-    float gamma = 0.75;
+    float gamma = 0.65;
 
     vec2 off = pix_coord-mod(pix_coord, res);
 
@@ -74,10 +56,7 @@ void main(){
     t = vec3(texture(tex, offsets[2]+off*offsets[2]));
     
     vec3 toneMapped = vec3(1)- exp(-t*exposure);
-    vec3 tc = pow(toneMapped, vec3(1/gamma));
-
-    color = vec4(tc,1)*(0.015625*dithering[int(mod(pix_coord.s, 8))][int(mod(pix_coord.t, 8))]);
-
+    color = vec4(pow(toneMapped, vec3(1/gamma)),1);
 
 }
 
