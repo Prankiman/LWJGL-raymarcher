@@ -1,6 +1,4 @@
 #version 450 core
-#extension GL_NV_gpu_shader5 : enable
-#extension GL_NV_compute_shader_derivatives : enable
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
@@ -349,7 +347,7 @@ void main() {
        
     color = tot_color*inv_samples;//tot_color/samples;
 
-    imageStore(ftex, pixel_coords, clamp(color, 0f, 1.5f));
+    imageStore(ftex, pixel_coords, clamp(color, 0.0f, 1.5f));
 
    
    
