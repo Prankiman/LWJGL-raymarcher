@@ -1,6 +1,13 @@
 # raymarcher-lwjgl
 raymarching in opengl lwjgl using compute shades
 
+## building
+
+this project uses maven for build management so make sure you have it installed
+
+to build use `mvn clean package` and to run use `mvn exec:java -Dexec.mainClass='raymarcher.main.Run'
+
+
 ## Images
 
 ![Screenshot 2022-04-18 163741](https://user-images.githubusercontent.com/69918769/163827372-bef4065d-c139-4596-9f47-0d74721b49a6.png)
