@@ -65,7 +65,7 @@ float yu = float(1-(float(pixel_coords.y*2 - height)*inv_height));
 
 vec3 comp = vec3(xu, yu, -1);
 
-vec3 lightColor[3] = vec3[3](vec3(1500), vec3(1000), vec3(800,250,50));
+vec3 lightColor[3] = vec3[3](vec3(1500), vec3(1000), vec3(50,250,800));
 
 vec3 lightPosition[3] = vec3[3](vec3(-30,0, -8), vec3(-30,0,10), vec3(2,-3,2));
 
@@ -132,7 +132,7 @@ float G_GGX (float NdotV, float roughness){
 }
 
 float G_S (vec3 N, vec3 V, vec3 L, float roughness){
-    return G_GGX (max (dot (N, L), 0.0), roughness) * 
+    return G_GGX (max (dot (N, L), 0.0), roughness) *
           G_GGX (max (dot (N, V), 0.0), roughness);
 }
 
@@ -152,8 +152,8 @@ vec3[2] offsets(vec3 rdx, vec3 rdy, float t, vec3 ro )
 {
     vec3 px = t*rdx+ro;
     vec3 py = t*rdy+ro;
-    
-    return vec3[2](px, py); 
+
+    return vec3[2](px, py);
 }
 
 vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
@@ -169,7 +169,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     vec3 kS;//used to determine how much diffise light should be present (1-kd)
 
     vec3 current_position;
-    
+
     float distance_to_closest;
 
     vec3 normal;
@@ -182,7 +182,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     vec3 rdx = vec3(normalize(vec3(xu+1*inv_width,yu-1*inv_height, -1)-cam)*rotx*roty);
     vec3 rdy = vec3(normalize(vec3(xu-1*inv_width,yu+1*inv_height, -1)-cam)*rotx*roty);
 
-    vec3[2] offsetss = offsets(rdx, rdy, 0.01, ro);	
+    vec3[2] offsetss = offsets(rdx, rdy, 0.01, ro);
 
     if(refl){
         normal = calculate_normal(ro);
@@ -197,7 +197,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         rdx = (rdx-normal*2.0*dot(rdx, normal));
         rdy = (rdy-normal*2.0*dot(rdy, normal));
-        
+
         offset = 0.1;
     }
 
@@ -209,7 +209,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
     while(total_distance_traveled < MAXIMUM_TRACE_DISTANCE)
     {
-        
+
         current_position = ro + (total_distance_traveled+offset) * rd;
 
         float ao = 1/(1+0.01*num_steps);//ambient occlusion
@@ -219,7 +219,7 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
         metalness = 0;//texture(metal,  vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).x;
 
         vec3 albedo = texture(sphere_tex, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).rgb;
-       
+
         float rough = clamp(texture(roughness, vec2(0.5+atan(temp_normal.x, temp_normal.z)*0.16, 0.5+asin(-temp_normal.y)*0.32)).r*3, 0.0f, 1.0f);
 
         vec3 F0 = vec3(0.04);
@@ -231,12 +231,12 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         vec3 Lo = vec3(0);
 
-        if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
-        {      
+        if (distance_to_closest < MINIMUM_HIT_DISTANCE)
+        {
 
             normal = calculate_normal(current_position);
 
-            vec3[2] offsets = offsets(rdx, rdy, total_distance_traveled, ro);	
+            vec3[2] offsets = offsets(rdx, rdy, total_distance_traveled, ro);
 
             tan_normal = (2*texture(normal_map, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32)).xyz)-1;
 
@@ -244,28 +244,28 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
             vec3 N = normal;
             vec3 V = -rd;
-           
+
            iSpecFac = fresnel_rough(max(dot(N, V), 0.0), F0, rough);
 
-            for(int i = 0; i < 3; i++) 
+            for(int i = 0; i < 3; i++)
             {
                 vec3 L = normalize(lightPosition[i]-current_position);
-                vec3 H = normalize(V + L); 
+                vec3 H = normalize(V + L);
 
                 float distant = length(lightPosition[i] - current_position);
                 float attenuation = 1.0 / (distant * distant);
-                vec3 radiance = lightColor[i] * attenuation;        
+                vec3 radiance = lightColor[i] * attenuation;
 
                 //---------------------------------------------------
-            
-           
+
+
                 //____________SPECULAR LIGHTING________________
 
-                float NDF = D_GGX(N, H, rough);        
-                float G  = G_S(N, V, L, rough);      
-                vec3 F    = fresnel_S(max(dot(H, V), 0.0), F0); 
+                float NDF = D_GGX(N, H, rough);
+                float G  = G_S(N, V, L, rough);
+                vec3 F    = fresnel_S(max(dot(H, V), 0.0), F0);
                 kS = F;
-            
+
                 vec3 specular = NDF * F * G /(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001);
                 //_________________________________________________
 
@@ -275,15 +275,15 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
                 kD = 1.0 - kS;
                 kD *= vec3(1) - metalness;
 
-                float NdotL = max(dot(N, L), 0.0);                
-                Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+                float NdotL = max(dot(N, L), 0.0);
+                Lo += (kD * albedo / PI + specular) * radiance * NdotL;
                 //_____________________________________________________________________
             }
 
             //indirect diffuse ligthing____________
             vec3 indirectDiffuse = vec3(textureLod(skybox, vec2(0.5+atan(normal.x, normal.z)*0.16, 0.5+asin(-normal.y)*0.32), 12.0).rgb);
 
-            vec3 idIntensity = (vec3(1) - iSpecFac); 
+            vec3 idIntensity = (vec3(1) - iSpecFac);
 
             indirectDiffuse *= idIntensity;
 
@@ -297,8 +297,8 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
 
         }
 
-        
-        
+
+
         num_steps ++;
         total_distance_traveled += distance_to_closest;
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
@@ -315,9 +315,9 @@ vec4[3] ray_march(vec3 ro, vec3 rd, bool refl)
     return vec4[3](skycolor, vec4(0), vec4(0,0,0,rough));
 }
 
-void main() {   
-        
-    vec4 temp_color = vec4(0); 
+void main() {
+
+    vec4 temp_color = vec4(0);
     vec4 tot_color = vec4(0);
     if(mod(pixel_coords.x, res) == 0 || mod(pixel_coords.y, res) == 0){
 
@@ -330,7 +330,7 @@ void main() {
             vec4[3] temp = t;
             temp_color = temp[0];
             float reflectivity = 1.0-rough;
-            for (int i = 0; i < num_reflections; i++){ 
+            for (int i = 0; i < num_reflections; i++){
                 if(temp[1].w == 1.0){
                     // vec2 perturb = vec2(rand(vec2(p,dir.x))*gloss*2, rand(vec2(p, dir.y))*gloss*2);
                     //dir = normalize(dir+vec3(perturb,0));//perturb the reflected ray for glossy reflections
@@ -344,12 +344,12 @@ void main() {
         }
 
     }
-       
+
     color = tot_color*inv_samples;//tot_color/samples;
 
     imageStore(ftex, pixel_coords, clamp(color, 0.0f, 1.5f));
 
-   
-   
+
+
 }
 

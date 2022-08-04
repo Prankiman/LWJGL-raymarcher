@@ -8,15 +8,15 @@ import java.io.IOException;
 import java.io.File;
 
 public class Shader {
-	
-	private String vertexFile = new File("./raymarcher_demo/resources/vertex.vs.glsl").getAbsolutePath();
-	private String fragmentFile = new File("./raymarcher_demo/resources/fragment.fs.glsl").getAbsolutePath();
-	
+
+	private String vertexFile = new File("./resources/vertex.vs.glsl").getAbsolutePath();
+	private String fragmentFile = new File("./resources/fragment.fs.glsl").getAbsolutePath();
+
 	public int programID, vertexID, fragmentID, computeID;
 
 
 	public Shader() {}
-	
+
 	public Shader(String vertexFile, String fragmentFile) {
 		this.vertexFile = vertexFile;
 		this.fragmentFile = fragmentFile;
@@ -37,29 +37,29 @@ public class Shader {
 
 		return shaderSource.toString();
 	}
-	
+
 	private int loadShader(int type, String file) {
 		int id = glCreateShader(type);
 		glShaderSource(id, readFile(file));
 		glCompileShader(id);
-		
+
 		if (glGetShaderi(id, GL_COMPILE_STATUS) == GL_FALSE) {
 			System.out.println("Could Not Compile " + file);
 			System.out.println(glGetShaderInfoLog(id));
 		}
-		
+
 		return id;
 	}
-	
+
 	public void create() {
 		programID = glCreateProgram();
-		
+
 		// computeID = loadShader(GL_COMPUTE_SHADER, computeFile);
 
 		vertexID = loadShader(GL_VERTEX_SHADER, vertexFile);
-	
+
 		fragmentID = loadShader(GL_FRAGMENT_SHADER, fragmentFile);
-		
+
 		// glAttachShader(programID, computeID);
 		// glLinkProgram(programID);
 		glAttachShader(programID, vertexID);
@@ -70,15 +70,15 @@ public class Shader {
         // glDeleteShader(fragmentID);
 		// glValidateProgram(programID);
 	}
-	
+
 	public void use() {
 		glUseProgram(programID);
 	}
-	
+
 	public void stop() {
 		glUseProgram(0);
 	}
-	
+
 	public void delete() {
 		stop();
 		glDetachShader(programID, vertexID);

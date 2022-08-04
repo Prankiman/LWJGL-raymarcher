@@ -9,14 +9,14 @@ import java.io.IOException;
 import java.io.File;
 
 public class ComputeShader {
-	
-	private String computeFile = new File("./raymarcher_demo/resources/raymarch_v3.cs.glsl").getAbsolutePath();
-	
+
+	private String computeFile = new File("./resources/raymarch_v3.cs.glsl").getAbsolutePath();
+
 	public int programID, computeID;
 
 
 	public ComputeShader() {}
-	
+
 	public ComputeShader(String computeFile) {
 		this.computeFile = computeFile;
 	}
@@ -36,27 +36,27 @@ public class ComputeShader {
 
 		return shaderSource.toString();
 	}
-	
+
 	private int loadShader(int type, String file) {
 		int id = glCreateShader(type);
 		glShaderSource(id, readFile(file));
 		glCompileShader(id);
-		
+
 		if (glGetShaderi(id, GL_COMPILE_STATUS) == GL_FALSE) {
 			System.out.println("Could Not Compile " + file);
 			System.out.println(glGetShaderInfoLog(id));
 		}
-		
+
 		return id;
 	}
-	
+
 	public void create() {
-		
+
 		computeID = loadShader(GL_COMPUTE_SHADER, computeFile);
         glCompileShader(computeID);
 
         programID = glCreateProgram();
-		
+
 		glAttachShader(programID, computeID);
 		glLinkProgram(programID);
 		// glValidateProgram(programID);
@@ -65,7 +65,7 @@ public class ComputeShader {
 	}
 	public void init(){
 		glUseProgram(programID);
-		
+
 		glUseProgram(0);
 	}
 
@@ -76,11 +76,11 @@ public class ComputeShader {
 		glDispatchCompute((int)Math.ceil(1600/8), (int)Math.ceil(1000/4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	}
-	
+
 	public void stop() {
 		glUseProgram(0);
 	}
-	
+
 	public void delete() {
 		stop();
 		glDetachShader(programID, computeID);

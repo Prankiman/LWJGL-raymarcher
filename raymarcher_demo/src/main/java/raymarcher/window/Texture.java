@@ -55,10 +55,11 @@ public class Texture {
         } else {
             assert false : "Error: (Texture) Could not load image '" + filepath + "'";
         }
-        
-        glGenerateMipmap(GL_TEXTURE_2D);
 
-        stbi_image_free(image);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        //if(image != null)
+            stbi_image_free(image);
+
         unbind();
     }
 

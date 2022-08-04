@@ -58,7 +58,6 @@ public class Window {
 		if (instance == null) {
 			instance = new Window();
 		}
-
 		return instance;
 	}
 
@@ -76,9 +75,9 @@ public class Window {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 		window = glfwCreateWindow(width, height, "Window", 0, 0);
-		glfwSetWindowPos(window, 500, 200); 
+		glfwSetWindowPos(window, 500, 200);
 		glfwMakeContextCurrent(window);
-		glfwSwapInterval(0);//disable vsync                                            
+		glfwSwapInterval(0);//disable vsync
 		GL.createCapabilities();
 
 		glfwSetCursorPosCallback(window, cursor);
@@ -93,12 +92,12 @@ public class Window {
 		output = new Texture();
 		vaoID = glGenVertexArrays();
 		//images must use 3+ color channels as grayscale image usage has not been implemented yet
-		skybox = new Texture( new File("./raymarcher_demo/resources/skyboxes/OutdoorHDRI028_4K-HDR.hdr").getAbsolutePath());
-		normal  = new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_NormalGL.jpg").getAbsolutePath());
-		sphere_tex =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
-		displace =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
-		metal =  new Texture( new File("./raymarcher_demo/resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
-		roughness =  new Texture( new File("./raymarcher_demo/resources/Gravel020_1K-JPG/Gravel020_1K_Roughness.jpg").getAbsolutePath());
+		skybox = new Texture( new File("./resources/skyboxes/street.JPG").getAbsolutePath());
+		normal  = new Texture( new File("./resources/Gravel020_1K-JPG/Gravel020_1K_NormalGL.jpg").getAbsolutePath());
+		sphere_tex =  new Texture( new File("./resources/Gravel020_1K-JPG/Gravel020_1K_Color.jpg").getAbsolutePath());
+		displace =  new Texture( new File("./resources/Gravel020_1K-JPG/Gravel020_1K_Displacement.jpg").getAbsolutePath());
+		metal =  new Texture( new File("./resources/Facade018B_1K-JPG/Facade018B_1K_Metalness.jpg").getAbsolutePath());
+		roughness =  new Texture( new File("./resources/Gravel020_1K-JPG/Gravel020_1K_Roughness.jpg").getAbsolutePath());
 
 		glBindVertexArray(vaoID);
 
