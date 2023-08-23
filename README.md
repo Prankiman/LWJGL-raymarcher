@@ -1,4 +1,4 @@
-# raymarcher-lwjgl
+# LWJGL-raymarcher
 raymarching in opengl lwjgl using compute shades
 
 ## building
